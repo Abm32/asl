@@ -8,6 +8,7 @@ regardless of whether everything else passes.
 from __future__ import annotations
 
 import itertools
+import re
 
 import pytest
 
@@ -379,8 +380,15 @@ def test_no_population_means_no_frequency_claim() -> None:
 
 
 def test_engine_version_is_recorded() -> None:
+    """The report must name the engine that produced the call, whatever it is.
+
+    Asserting a specific version here would make this a chore to edit at every
+    engine bump, and the point is not *which* version — it is that a call can be
+    attributed to one. `pgx-core` 0.8.0 shipped with its own version string out of
+    sync for exactly that reason.
+    """
     interp = build(_assay({}))
-    assert interp.engine_version.startswith("0.7.")
+    assert re.fullmatch(r"\d+\.\d+\.\d+", interp.engine_version)
     assert interp.engine_version in render(interp)
 
 

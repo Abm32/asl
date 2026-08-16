@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Anukriti Oncology Safety Ledger — evidence-attributed PGx interpretation and outcome capture"
 requires-python = ">=3.11"
 dependencies = [
-    "anukriti-pgx-core==0.7.3",
+    "anukriti-pgx-core==0.8.1",
 ]
 
 [project.optional-dependencies]
