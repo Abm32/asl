@@ -198,3 +198,63 @@ def test_haplotype_flag_carries_its_non_replication() -> None:
         assert spec.get("clinical_non_replication"), f"{key}: no non-replication"
         assert spec.get("what_the_claim_is_not"), f"{key}: claim not bounded"
         assert "phase" in spec.get("phase_requirement", "").lower()
+
+
+# ---------------------------------------------------------------------------
+# Packaging. These exist because the suite passed for the package's whole life
+# while `pip install asl` was broken: the CPIC tables lived in a top-level
+# `data/evidence/` resolved via `parents[2]`, which walks *outside* the installed
+# package. From a checkout that path happens to work. From a wheel it does not,
+# and there was no data in the wheel anyway — so a pip-installed `asl demo`
+# raised EvidenceError telling the user to regenerate tables that had never been
+# shipped.
+#
+# Found by clean-install verification against the published engine, not by any
+# test. That is the lesson worth encoding: a suite run only from a checkout
+# cannot see a packaging defect.
+# ---------------------------------------------------------------------------
+
+
+def test_evidence_tables_live_inside_the_package() -> None:
+    """The data directory must be package-relative, not layout-relative.
+
+    Asserted on the resolved path rather than the source text so that a future
+    refactor cannot satisfy it cosmetically.
+    """
+    from pathlib import Path
+
+    import asl.evidence as evidence_module
+
+    package_root = Path(evidence_module.__file__).resolve().parent
+    assert evidence_module._DATA_DIR == package_root / "data"
+    assert evidence_module._DATA_DIR.is_dir()
+
+
+def test_every_gene_table_is_present_as_package_data() -> None:
+    """The three generated tables must be reachable through the package itself."""
+    from importlib.resources import files
+
+    data = files("asl") / "data"
+    for name in (
+        "DPYD_evidence.json",
+        "DPYD_conflicts.json",
+        "NUDT15_evidence.json",
+        "TPMT_evidence.json",
+    ):
+        assert (data / name).is_file(), f"{name} is not packaged"
+
+
+def test_pyproject_declares_the_data_as_package_data() -> None:
+    """Files inside the package still need declaring, or setuptools drops them.
+
+    Moving the directory was necessary but not sufficient: without a
+    ``package-data`` entry the wheel is built without the JSON, which is the
+    same failure with a different cause.
+    """
+    from pathlib import Path
+
+    pyproject = (
+        Path(__file__).resolve().parents[1] / "pyproject.toml"
+    ).read_text()
+    assert "[tool.setuptools.package-data]" in pyproject
+    assert 'asl = ["data/*.json"]' in pyproject

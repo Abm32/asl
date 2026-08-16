@@ -1,7 +1,16 @@
 """Load the CPIC-generated evidence tables and attach provenance per allele.
 
-Reads only the pinned artifacts in ``data/evidence/``. No network access, which
+Reads only the pinned artifacts in ``asl/data/``. No network access, which
 is what lets this run in a hospital room with no connectivity.
+
+The tables live **inside the package** rather than in a top-level ``data/``
+directory, and that is deliberate. The previous layout resolved them via
+``Path(__file__).parents[2]``, which walks *outside* the installed package: it
+worked from a source checkout and failed on any ``pip install``, because the wheel
+contained no data at all. A pip-installed ``asl demo`` raised ``EvidenceError``
+telling the user to regenerate tables that had never been shipped. Found by
+clean-install verification, not by the suite — which had only ever run from a
+checkout.
 
 Refuses when an allele row lacks citations or an evidence strength: a report
 whose claims cannot be traced to a source is the failure this package exists to
@@ -17,7 +26,8 @@ from pathlib import Path
 
 from .models import Basis, EvidenceRecord
 
-_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "evidence"
+# Package-relative, so it resolves identically from a checkout and from a wheel.
+_DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
 class EvidenceError(RuntimeError):

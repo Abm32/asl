@@ -21,7 +21,7 @@ asl demo                                # the worked patient case
 asl quadrant --csv fixtures/cohort_template.csv
 ```
 
-Runs entirely offline. CPIC's data is pinned in `data/evidence/`, so a clinic
+Runs entirely offline. CPIC's data is pinned in `src/asl/data/`, so a clinic
 demonstration does not depend on connectivity.
 
 ### Where to start
@@ -49,7 +49,7 @@ src/asl/
   report.py      renders the record and nothing else
   ledger.py      append-only outcome capture; recursive PHI refusal
   cli.py         asl demo | panels | interpret | quadrant
-data/evidence/   generated from CPIC's API, never hand-edited (CI checks drift)
+src/asl/data/   generated from CPIC's API, never hand-edited (CI checks drift)
 scripts/         regen_evidence_tables.py [--check]
 tests/           140 tests; every refusal above has one
 out/             worked outputs, regenerated on release
@@ -121,7 +121,7 @@ heterozygote's recommendation going from 50% of standard dose to **75%, starting
 cycle 1** — while stating that its database "will remain at AV=0.5 until then"
 (full guideline expected fall 2026).
 
-So the API returns 0.5, `data/evidence/` says 0.5, `--check` passes, and the fact
+So the API returns 0.5, `src/asl/data/` says 0.5, `--check` passes, and the fact
 that the recommendation is about to move is invisible to every automated guard.
 **In CPIC's own Central/South Asian data HapB3 is 77.5% of the entire actionable
 allele frequency** (0.019658 of 0.025380) — an Indian DPYD panel is, to a first
@@ -160,7 +160,7 @@ negatives. Both are the same defect — one number doing two jobs.
 ```
 CPIC live API ──(scripts/regen_evidence_tables.py --check, gated in CI)──┐
                                                                         ▼
-anukriti-pgx-core ==0.7.3 ──▶ interpret ──▶ pipeline ──▶ report      data/evidence/
+anukriti-pgx-core ==0.8.1 ──▶ interpret ──▶ pipeline ──▶ report    src/asl/data/
    (CPIC truth, decides)         │            │                      (pinned, offline)
                                  │            ├── evidence  (provenance per allele)
                                  │            ├── flags     (named conflicts)

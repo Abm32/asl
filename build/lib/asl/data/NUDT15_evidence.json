@@ -1,0 +1,501 @@
+{
+  "_gene": "NUDT15",
+  "_source": "CPIC API allele table (api.cpicpgx.org/v1/allele?genesymbol=eq.NUDT15)",
+  "_note": "Every field except `basis` is copied verbatim from CPIC and must never be edited. `basis` is classified from `findings_raw` and falls back to 'unclassified' rather than guessing. Regenerate with scripts/regen_evidence_tables.py; CI runs it with --check so drift from CPIC fails a build.",
+  "_allele_count": 23,
+  "alleles": {
+    "*1": {
+      "clinical_function": "Normal function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Definitive",
+      "findings_raw": "NUDT15*1 is assigned normal function based on definitive evidence. NUDT15*1 corresponds to the reference sequence, NG_047021.1, containing no SNVs. As such, the protein encoded by this transcript is used as the reference for in vitro (26878724, 28659275, 27530327, 32094176, 34636169, 38246006, preclinical (31645647, 37488179), and clinical studies (27604507, 26878724, 34480209, 35067667, 28445187, 32372428, 33481917, 39688234). Additionally, NUDT15*1/*1 patients have been shown to tolerate standard thiopurine dosing (26878724, 32598049, 28903549, 32308129, 29720126, 36858569, 35156873, 32221476, 31507415, 27577869, 27416873, 26033531, 32873882, 39688234).",
+      "basis": "in_vitro",
+      "citations": [
+        "26033531",
+        "26878724",
+        "27416873",
+        "27530327",
+        "27577869",
+        "27604507",
+        "28445187",
+        "28659275",
+        "28903549",
+        "29720126",
+        "31507415",
+        "31645647",
+        "32094176",
+        "32221476",
+        "32308129",
+        "32372428",
+        "32598049",
+        "32873882",
+        "33481917",
+        "34480209",
+        "34636169",
+        "35067667",
+        "35156873",
+        "36858569",
+        "37488179",
+        "38246006",
+        "39688234"
+      ],
+      "frequency": {
+        "Latino": 0.93638057,
+        "European": 0.9931303,
+        "East Asian": 0.87874174,
+        "Central/South Asian": 0.93002415
+      }
+    },
+    "*10": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*10 is assigned no function based on limited evidence. While there is no literature describing function for NUDT15*10, c.2T>C is predicted to disrupt protein translation due to the loss of the canonical start codon, and there is no alternative start codon available. Three out of seven variant effect predictors tested by CPIC staff predict that the NUDT15*10 SNV (c.2T>C) impairs protein function.",
+      "basis": "unclassified",
+      "citations": [],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*11": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*11 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*11 in HEK293 cells and found that protein expression and thiopurine sensitivity were comparable to cells expressing NUDT15*1 (32094176). Nine out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*11-defining SNV (c.139G>A (p.G47R)) impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*12": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*12 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*12 in HEK293 cells and found there was no effect on thiopurine sensitivity (32094176). An additional in vitro study found that NUDT15.12 exhibits decreased protein thermostability compared to NUDT15.1 (29519865). Patients carrying the NUDT15*12 allele had a 20% reduction in thiopurine dosing after the occurrence of adverse reactions (29519865). Seven out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*12-defining SNV (c.156C>G (p.F52L)) impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "29519865",
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*13": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*13 is assigned no function based on limited evidence. The NUDT15*13 SNV (NM_018283.4:c.343dup) results in a frameshift at amino acid residue 115 and the loss of the enzymatic domain (29519865). Patients carrying a NUDT15*13 allele had a 33% reduction in thiopurine dosage following the occurrence of adverse reactions (29519865). NUDT15*13 is characterized by the duplication c.343_344insG (p.E115fs), which is predicted to impair protein function by CADD and Phd-SNPg",
+      "basis": "unclassified",
+      "citations": [
+        "29519865"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*14": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*14 is assigned no function based on limited evidence. NUDT15*14 is characterized by the frameshift insertion c.80_81insCGGG (p.C28fs), which is predicted to impair protein function by CADD and PhD-SNPg. The insertion occurs in exon 1, which is within the Nudix hydrolase domain, and NUDT15*14 is predicted to produce a protein targeted for nonsense-mediated decay.",
+      "basis": "unclassified",
+      "citations": [],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*15": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*15 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*15 in HEK293 cells and found that NUDT15*15 protein levels were comparable to NUDT15*1 and NUDT15*15 had no effect on thiopurine sensitivity in cells (32094176). Five out of nine variant effect predictors tested by CPIC staff predict that c.467T>A (p.L156Q) impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*16": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*16 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*16 in HEK293 cells and found that NUDT15.16 protein levels were significantly decreased compared to NUDT15.1, and NUDT15*16 increased thiopurine sensitivity in cells (32094176). Seven out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*16-defining SNV, c.88C>T (p.L30V), impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*17": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*17 is assigned no function based on limited evidence. The NUDT15*17 SNV (c.352G>T) results in a premature stop codon(p.E118X) within the Nudix hydrolase domain. Additionally, the stop occurs upstream of c.415C>T, a known \"no function\" variant. Four out of four variant effect predictors tested by CPIC staff predict that the NUDT15*17 -defining SNV (c.352G>T (p.E118X)) impairs protein function.",
+      "basis": "unclassified",
+      "citations": [],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*18": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*18 is assigned no function based on limited evidence. One patient identified with the genotype NUDT15*1/*18 received 50 mg of 6-MP daily and experienced pancytopenia after 3 months of treatment. However, this patient was also heterozygous for an inactivating TPMT allele (30728528). NUDT15*18 is characterized by c.221delA, causing a frameshift (p.N74fs), that is predicted to impair protein function by CADD and PhD-SNP6. The deletion occurs in exon 2, which is within the Nudix hydrolase domain, and NUDT15*18 is predicted to produce a protein targeted for nonsense-mediated decay.",
+      "basis": "unclassified",
+      "citations": [
+        "30728528"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*19": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*19 is assigned no function based on limited evidence. One patient genotyped NUDT15*1/*19 received 150 mg of azathiopurine daily and experienced pancytopenia after 1 week of treatment. However, this patient was also heterozygous for an inactivating TPMT allele (30728528). Four out of seven variant effect predictors tested by CPIC staff predict that the NUDT15*19-defining SNV (c.3G>C (p.M1I)) impairs protein function. c.3G>C is predicted to disrupt protein translation due to the loss of the canonical start codon, and there is no alternative start codon available.",
+      "basis": "unclassified",
+      "citations": [
+        "30728528"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*2": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Definitive",
+      "findings_raw": "NUDT15*2 is assigned no function based on definitive evidence. An in vitro study using a bacterial expression system found that NUDT15.2 enzymatic activity was undetectable, and the protein exhibited decreased thermostability compared to NUDT15.1 (26878724). Patients receiving thiopurines that were genotyped NUDT15*1/*2 exhibited elevated DNA-TG levels compared with NUDT15*1/*1 patients after thiopurine dose normalization (26878724, 28445187, 33481917). This result was recapitulated in mammalian cell lines genotyped NUDT15*1/*2 and the 6-MP IC50 in these cells was significantly lower than NUDT15*1/*1 cell lines (34636169). Additionally, patients genotyped NUDT15*2/*3 exhibited the highest levels of DNA-TG among study participants after thiopurine dose normalization (26878724, 28445187). Importantly, NUDT15*3 is also characterized by the SNV c.415C>T (p.R139C). In line with these observations, patients genotyped NUDT15*1/*2, NUDT15*2/*2, NUDT15*2/*3, NUDT15*2/*4, or NUDT15*2/*7 have repeatedly been shown to tolerate lower doses of thiopurines (28903549, 32221476, 32308129, 32873882, 33481917, 35156873, 39688234) and exhibit an increased incidence of leukopenia relative to NUDT15*1/*1 patients during standard thiopurine treatment (37454061). Four out of nine variant effect predictors tested by CPIC staff predict that the SNV c.415C>T (p.R139C) impairs protein function. Additionally, the insertion c.55_56insGAGTCG (p.V18_V19insGV) is predicted to impair protein function by CADD and PhD-SNPg",
+      "basis": "in_vitro",
+      "citations": [
+        "26878724",
+        "28445187",
+        "28903549",
+        "32221476",
+        "32308129",
+        "32873882",
+        "33481917",
+        "34636169",
+        "35156873",
+        "37454061",
+        "39084859",
+        "39688234"
+      ],
+      "frequency": {
+        "Latino": 0.0365,
+        "European": 0.0,
+        "East Asian": 0.035,
+        "Central/South Asian": 0.0
+      }
+    },
+    "*20": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*20 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*20 in HEK293 cells and found NUDT15 protein expression and thiopurine sensitivity were comparable to cells expressing NUDT15*1 (32094176). Eight out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*20-defining SNV (c.386C>G (p.P129R)) impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*21": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*21 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*21 in HEK293 cells and found NUDT15 protein expression and thiopurine sensitivity were comparable to cells expressing NUDT15*1 (32094176). Nine out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*21-defining SNV, c.410G>C (p.G137A), is neutral for protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*22": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*22 is assigned uncertain function based on inadequate evidence An in vitro study expressed NUDT15*22 in HEK293 cells and found NUDT15 protein expression and thiopurine sensitivity were comparable to cells expressing NUDT15*1 (32094176). Eight out of ten variant effect predictors tested by CPIC staff predict that the NUDT15*22-defining SNV, c.99G>T (p.K33N) impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*23": {
+      "clinical_function": "Uncertain function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Inadequate",
+      "findings_raw": "NUDT15*23 is assigned uncertain function based on inadequate evidence. An in vitro study expressed NUDT15*23 in HEK293 cells and found NUDT15 protein expression and thiopurine sensitivity were comparable to cells expressing NUDT15*1 (32094176). Seven out of ten variant effect predictors tested by CPIC staff predict that the NUDT15*23-defining SNV, c.106G>T (p.G36C) impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*3": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Definitive",
+      "findings_raw": "NUDT15*3 is assigned no function based on definitive evidence. In vitro studies using a bacterial expression system have found that NUDT15.3 enzymatic activity is significantly decreased or undetectable (26878724, 28659275, 33753169) and protein stability is decreased (29519865, 27530327, 33753169). In mammalian cells, NUDT15.3 protein expression is decreased (32094176, 38246006) and the protein was shown to be actively degraded by the proteasome (27530327). Additionally, NUDT15*1/*3 or NUDT15*3/*3 cell lines exhibit increased levels of DNA-TG and increased sensitivity to 6-MP compared to NUDT15*1/*1 cell lines (34636169). These data are supported by published structural analysis which indicates that the NUDT15*3 SNV, c.415C>T (p.R139C), disrupts the \u03b1-helix loop and the base of the substrate binding pocket, and may form a disulfide bond with residue 140, decreasing enzymatic activity (28088792). While the formation of a disulfide bond was not observed, the destabilizing effects of c.415C>T (p.R139C) were confirmed using an experimentally derived crystal structure of NUDT15.3 (33753169). Four out of nine variant effect predictors tested by CPIC staff predict that c.415C>T (p.R139C) impairs protein function. Mouse models of NUDT15*1/*3 or NUDT15*3/*3 are more susceptible to MP treatment and exhibit increased cytopenia and bone marrow failure compared to NUDT15*1/*1 mice (31645647). Additionally, HSCs derived from the bone marrow of NUDT15*3/*3 mice exhibit decreased viability and an upregulation of genes associated with DNA damage response and the cell cycle (37488179). The level of dose-normalized DNA-TG is increased in NUDT15*1/*3 or NUDT15*3/*3 patients (26878724, 34480209, 28445187, 33481917, 39688234) relative to NUDT15*1/*1 patients. Lastly, NUDT15*1/*3 or NUDT15*3/*3 patients tolerate significantly lower thiopurine doses compared to NUDT15*1/*1 patients (26878724, 33481917, 32598049, 28903549, 32308129, 29720126, 32873882, 36858569, 35156873, 32221476, 31507415, 27577869, 27416873, 26033531, 39688234) and experience an increased incidence of adverse reactions and/or therapy interruption (30728528, 37454061, 28903549, 36858569).",
+      "basis": "in_vitro",
+      "citations": [
+        "26033531",
+        "26878724",
+        "27416873",
+        "27530327",
+        "27577869",
+        "27604507",
+        "28088792",
+        "28445187",
+        "28659275",
+        "28903549",
+        "29519865",
+        "29720126",
+        "30728528",
+        "31507415",
+        "31645647",
+        "32094176",
+        "32221476",
+        "32308129",
+        "32372428",
+        "32598049",
+        "32873882",
+        "33481917",
+        "33753169",
+        "34480209",
+        "34636169",
+        "35067667",
+        "35156873",
+        "36858569",
+        "37454061",
+        "37488179",
+        "38246006",
+        "39688234"
+      ],
+      "frequency": {
+        "Latino": 0.0075,
+        "European": 0.002,
+        "East Asian": 0.0605,
+        "Central/South Asian": 0.067
+      }
+    },
+    "*4": {
+      "clinical_function": "No function",
+      "biochemical_function": "Decreased function",
+      "activity_value": null,
+      "evidence_strength": "Strong",
+      "findings_raw": "NUDT15*4 is assigned no function based on strong evidence. Clinical studies have found that NUDT15*1/*4 or NUDT15*2/*4 patients are started on lower doses of thiopurines and exhibit a greater incidence of leukopenia and therapy interruption compared to NUDT15*1/*1 patients (28903549, 36858569). Retrospective analysis found that NUDT15*1/*4 patients tolerated lower thiopurine doses (26878724, 39688234) and exhibited increased levels of dose-normalized DNA-TG in leukocytes compared to NUDT15*1/*1, *1/*2, and *1/*3 patients (39688234). In vitro evidence shows that NUDT15.4 exhibits decreased enzymatic activity (26878724, 33753169), decreased protein expression (32094176) and decreased thermostability (26878724, 28088792, 33753169) compared to NUDT15.1. Published structural modeling indicates that the functional SNV (c.416G>A (p.R139H)) disrupts the \u03b1-helix loop and the base of the substrate binding pocket (28088792). These structural destabilizing effects were confirmed using an experimentally derived crystal structure of NUDT15.4 (33753169). Five out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*4-defining SNV, c.416G>A (p.R139H), impairs protein function .",
+      "basis": "in_vitro",
+      "citations": [
+        "26878724",
+        "28088792",
+        "28903549",
+        "32094176",
+        "33753169",
+        "36858569",
+        "39688234"
+      ],
+      "frequency": {
+        "Latino": 0.01786,
+        "European": 3.285361e-05,
+        "East Asian": 0.0011128682,
+        "Central/South Asian": 3.269e-05
+      }
+    },
+    "*5": {
+      "clinical_function": "Decreased function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Moderate",
+      "findings_raw": "NUDT15*5 is assigned decreased function based on moderate evidence. Patients genotyped NUDT15*1/*5 or NUDT15*3/*5 exhibited increased dose-normalized levels of DNA-TG compared to patients genotyped NUDT15*1/*1 (33481917). Intermediate metabolizers, including those genotyped NUDT15*1/*5, have been shown to tolerate lower thiopurine doses (33481917, 32221476, 36873097, 33504140) and exhibit an increased risk of neutropenia (36873097). One patient genotyped NUDT15*3/*5 exhibited similar thiopurine intolerance to a patient genotyped NUDT15*3/*3 (26878724). In vitro studies using a bacterial expression system found that NUDT15.5 exhibits decreased enzymatic activity and decreased protein stability compared to NUDT15.1 (26878724, 33753169). However, published in silico analysis indicates that the NUDT15*5-defining SNV, c.52G>A (p.V18I) has minimal effect on protein structure and NUDT15.5 exhibits similar thermostability as NUDT15.1 (28088792). Despite these predictions, an experimentally derived crystal structure of NUDT15.5 found that c.52G>A (p.V18I) destabilizes the conserved NUDIX motif (33753169). Five out of nine variant effect predictors tested by CPIC staff predict that c.52G>A (p.V18I) impairs protein function. An additional in vitro study found that the NUDT15.5 protein is expressed at similar levels to NUDT15.1 and does not affect 6-MP sensitivity in HEK293 cells (32094176).",
+      "basis": "in_vitro",
+      "citations": [
+        "26878724",
+        "28088792",
+        "28445187",
+        "28903549",
+        "32094170",
+        "32221476",
+        "32598049",
+        "33481917",
+        "33504140",
+        "33753169",
+        "34636169",
+        "36873097",
+        "39084859"
+      ],
+      "frequency": {
+        "Latino": 0.0,
+        "European": 7.794928e-06,
+        "East Asian": 0.01108,
+        "Central/South Asian": 0.0004482
+      }
+    },
+    "*6": {
+      "clinical_function": "No function",
+      "biochemical_function": "Decreased function",
+      "activity_value": null,
+      "evidence_strength": "Moderate",
+      "findings_raw": "NUDT15*6 is assigned no function based on moderate evidence. In vitro studies using a bacterial expression system found that NUDT15.6 exhibits decreased enzymatic activity using TGTP or TdGTP as substrates compared to NUDT15.1 (26878724, 33753169). Additionally, NUDT15.6 exhibits reduced protein thermostability compared to NUDT15.1 (26878724, 33753169). The destabilizing effects of c.55_56insGAGTCG (p.V18_V19insGV) were confirmed using an experimentally derived crystal structure of NUDT15.6 (33753169). NUDT15*1/*6 patients have been shown to tolerate lower doses of thiopurines (32221476, 34665987) and one patient genotyped NUDT15*3/*6 tolerated a significantly lower thiopurine dose (32873882) compared to NUDT15*1/*1 patients. Patients carrying a NUDT15*6 allele also exhibit increased incidence of adverse reactions and increased therapy interruption compared to NUDT15*1/*1 patients (28903549, 30728528, 37454061, 34665987, 36873097, 30806694). NUDT15*6 is characterized by the in-frame insertion c.55_56insGAGTCG (p.V18_V19insGV), which is predicted to impair protein function by CADD and PhD-SNPg",
+      "basis": "in_vitro",
+      "citations": [
+        "26878724",
+        "28903549",
+        "30728528",
+        "30806694",
+        "32221476",
+        "32308129",
+        "32372428",
+        "32598049",
+        "32873882",
+        "33481917",
+        "33753169",
+        "34665987",
+        "35156873",
+        "36873097",
+        "37454061"
+      ],
+      "frequency": {
+        "Latino": 0.0015,
+        "European": 0.003,
+        "East Asian": 0.013,
+        "Central/South Asian": 0.002
+      }
+    },
+    "*7": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Moderate",
+      "findings_raw": "NUDT15*7 is assigned no function based on moderate evidence. Patients carrying a NUDT15*7 allele tolerate lower doses of thiopurines (28659275 , 32873882 , 32221476 ). An in vitro study using a bacterial expression system found that NUDT15.7 enzymatic activity was undetectable and NUDT15.7 exhibited decreased protein thermostability compared to NUDT15.1 (28659275). An additional in vitro study expressed NUDT15*7 in HEK293 cells and found that the protein was expressed at similar levels to NUDT15.1, but cells were significantly more sensitive to thiopurine treatment (32094176). Nine out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*7-defining SNV, c.101G>C (p.R34T), impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "28659275",
+        "32094176",
+        "32221476",
+        "32873882"
+      ],
+      "frequency": {
+        "Latino": 0.0,
+        "European": 0.0,
+        "East Asian": 0.0005654,
+        "Central/South Asian": 0.0
+      }
+    },
+    "*8": {
+      "clinical_function": "Decreased function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Limited",
+      "findings_raw": "NUDT15*8 is assigned decreased function based on limited evidence. One patient genotyped NUDT15*2/*8 was extremely sensitive to thiopurine treatment (28659275). An in vitro study using a bacterial expression system found that NUDT15.8 exhibits decreased enzymatic activity and decreased protein thermostability compared to NUDT15.1 (28659275). An additional in vitro study expressed NUDT15*8 in HEK293 cells and found that protein expression and thiopurine sensitivity were comparable to cells expressing NUDT15*1 (32094176). Seven out of nine variant effect predictors tested by CPIC staff predict that the NUDT15*8-defining SNV, c.103A>G (p.K35E), impairs protein function.",
+      "basis": "in_vitro",
+      "citations": [
+        "28659275",
+        "32094176"
+      ],
+      "frequency": {
+        "Latino": null,
+        "European": null,
+        "East Asian": null,
+        "Central/South Asian": null
+      }
+    },
+    "*9": {
+      "clinical_function": "No function",
+      "biochemical_function": null,
+      "activity_value": null,
+      "evidence_strength": "Strong",
+      "findings_raw": "NUDT15*9 is assigned no function based on strong evidence. An in vitro study using a bacterial expression system found that NUDT15.9 enzymatic activity was undetectable and NUDT15.9 exhibited decreased protein thermostability compared to NUDT15.1 (28659275). NUDT15*1/*9 patients exhibit decreased tolerance to thiopurines (28659275) and experience severe hematotoxicity (30728528, 30806694). NUDT15*9 is characterized by the deletion c.50delGAGTCG (p.del17_18GV), which is predicted to impair protein function by CADD and PhD-SNPg",
+      "basis": "in_vitro",
+      "citations": [
+        "28659275",
+        "30728528",
+        "30806694",
+        "39084859"
+      ],
+      "frequency": {
+        "Latino": 0.000259413,
+        "European": 0.0018290388,
+        "East Asian": 0.0,
+        "Central/South Asian": 0.000494936
+      }
+    }
+  }
+}

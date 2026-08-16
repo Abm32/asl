@@ -29,12 +29,12 @@ ruff check src tests
 ```
 
 No network access is needed to run the suite, and none should be introduced into
-the library. CPIC's data is pinned in `data/evidence/`; only
+the library. CPIC's data is pinned in `src/asl/data/`; only
 `scripts/regen_evidence_tables.py` talks to the network.
 
 ## The evidence layer is generated, never hand-authored
 
-`data/evidence/*_evidence.json` is produced by
+`src/asl/data/*_evidence.json` is produced by
 `scripts/regen_evidence_tables.py` from CPIC's API. Do not hand-edit those files.
 CI runs the script with `--check` and fails the build if the committed tables
 have drifted from CPIC.

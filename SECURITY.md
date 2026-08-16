@@ -46,7 +46,7 @@ Real examples that were found and fixed, to calibrate what counts:
 
 - **The library accepts no PHI.** The ledger enforces a field-name denylist plus
   value pattern checks, recursively, and refuses rather than sanitising.
-- **The CLI is offline.** CPIC data is pinned in `data/evidence/`; nothing in
+- **The CLI is offline.** CPIC data is pinned in `src/asl/data/`; nothing in
   `src/asl/` opens a socket. A clinic demonstration does not depend on, or leak
   to, the network.
 - **Ledger files are gitignored** (`ledger*.jsonl`). If you ever find one in a

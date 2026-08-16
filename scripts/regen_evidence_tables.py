@@ -28,7 +28,7 @@ value is ``unclassified`` — never ``in_vitro``. Guessing the assay type would 
 the same error in miniature.
 
 Three fields cannot be generated because CPIC does not publish them, and they
-live in ``data/evidence/<GENE>_conflicts.json`` instead: ``cohort_n``,
+live in ``src/asl/data/<GENE>_conflicts.json`` instead: ``cohort_n``,
 ``cohort_ancestry`` and ``conflict``. They are display metadata only and never
 feed a phenotype.
 
@@ -61,7 +61,7 @@ _API = "https://api.cpicpgx.org/v1"
 # PMID 41618934) and are generated now so the table is ready.
 _GENES = ("DPYD", "NUDT15", "TPMT")
 
-_OUT_DIR = Path("data/evidence")
+_OUT_DIR = Path("src/asl/data")
 
 
 def _get(path: str) -> list[dict]:
