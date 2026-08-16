@@ -1,0 +1,101 @@
+PATIENT: same patient, with research sequencing added.
+FOUND: *9A heterozygous, *6 heterozygous.
+
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant panel + 4 alleles common in South Asians   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *6/*9A
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (8): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3) | c.85T>C (*9A) | c.2194G>A (*6) | c.1627A>G (*5) | c.496A>G
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3) | c.1627A>G (*5) | c.496A>G
+  Tested & FOUND    : c.85T>C (*9A) (het, 1 copy) | c.2194G>A (*6) (het, 1 copy)
+
+  Absence is NOT established for: c.1601G>A (*4), c.703C>T (*8), c.2983G>T
+  (*10), c.1156G>T (*12), c.1906A>C. These variants were not assayed by
+  'CPIC 4-variant panel + 4 alleles common in South Asians'. An untested
+  locus is not a negative result.
+
+[ASL-POP-01]  LOCI THAT CANNOT RETURN A POSITIVE HERE
+  c.1679T>G (*13)
+    CPIC allele frequency in Central/South Asian is 0.00000 — this locus
+    cannot return a positive result in this population
+
+[ASL-EVID-01]  EVIDENCE BASIS OF EACH FUNCTION CALL
+  c.85T>C (*9A)
+    CPIC function : Normal function (activity 1.0)
+    Strength      : Strong
+    Basis         : in_vivo  [CPIC findings: Dihydrouracil (in vivo)]
+    Citations     : PMID 18452418
+    Frequency     : 0.25526 in Central/South Asian (CPIC)
+  c.2194G>A (*6)
+    CPIC function : Normal function (activity 1.0)
+    Strength      : Moderate
+    Basis         : in_vitro  [CPIC findings: 5-fluorouracil (in vitro)]
+    Citations     : PMID 23328581
+    Frequency     : 0.09506 in Central/South Asian (CPIC)
+
+[P3_DPYD_STAR9A_EVIDENCE_IS_NON_INDIAN]
+  c.85T>C (*9A): the literature disagrees about this allele. The CPIC call
+  above stands; asl does not reclassify it.
+    CPIC position: Normal function, activity 1.0, evidence strength STRONG, basis IN VIVO (dihydrouracil), PMID 18452418.
+    Evidence pointing the other way:
+      - He YF, Wei W, Zhang X et al. J Clin Pharm Ther 2008;33(3):307-314 — the CPIC citation itself; PMID 18452418; n=142; CHINESE
+        Plasma DPD activity measured directly; found NO correlation between *9A and DPD activity. This is the basis of CPIC's Normal-function call, and it is an East Asian in-vivo study, not an Indian one and not an in-vitro one.
+      - Varma R et al. Drug Metab Pers Ther 2020;35(4); PMID 32966231; n=145; South Indian (JIPMER)
+        GG genotype associated with significantly higher 5-FU plasma levels at 3h post-capecitabine, suggesting impaired elimination. Pharmacokinetic, not toxicity-endpoint.
+    Evidence consistent with CPIC:
+      - Kanai M et al. Cancer Med 2022; PMID 36524458; n=1364; Japanese
+        No toxicity association; trending protective for neutropenia (OR 0.53, p=0.054).
+    Resolution: NOT A FUNCTION DISPUTE. This entry exists because *9A is the most common DPYD allele in Central/South Asian populations (CPIC frequency 0.25526) and the evidence for its Normal-function call comes from a 142-patient Chinese cohort. That is a provenance disclosure, not a claim that the call is wrong. asl states the ancestry of the evidence and stops there.
+
+[P2_DPYD_STAR6_INVITRO_CLINICAL_CONFLICT]
+  c.2194G>A (*6): the literature disagrees about this allele. The CPIC call
+  above stands; asl does not reclassify it.
+    CPIC position: Normal function, activity 1.0, evidence strength Moderate, basis in vitro (5-fluorouracil), PMID 23328581 (Offer 2013, HEK293T recombinant enzyme).
+    Evidence pointing the other way:
+      - Del Re M et al. Pharmacogenomics J 2019;19:556; PMID 30723313; n=1254; European (Italian)
+        c.2194G>A associated with grade >=3 adverse reactions, OR 1.7, p<0.001. Authors conclude it should be evaluated pre-emptively.
+      - Boige V et al. PETACC-8 secondary analysis, JAMA Oncol 2016; n=1545; European
+        Significant association with severe toxicity on FOLFOX4.
+      - Ruzzo A et al. TOSCA, Br J Cancer 2017; PMID 29065426; European (Italian)
+        Significant for time to grade >=3 neutropenia.
+      - Li Q et al. meta-analysis 2014; n=946; mixed, predominantly European
+        Bone-marrow suppression, p<0.001.
+    Evidence consistent with CPIC:
+      - Baskarane H et al. D-TORCH sub-study, Front Pharmacol 2026;17:1732128; n=76; Indian (AIIMS New Delhi)
+        rs1801160 found in 13/76 patients. No significant association between DPYD variant status and grade >=2 toxicity overall (OR 0.71, 95% CI 0.26-1.98, p=0.612). Prospective, WES-based, unselected for toxicity.
+    Resolution: UNRESOLVED. CPIC has not revised the call. asl reports CPIC's call as CPIC's, and reports this disagreement alongside it. asl does not reclassify the allele.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T11:43:56+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.

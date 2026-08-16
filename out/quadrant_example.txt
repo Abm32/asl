@@ -1,0 +1,14 @@
+Four-quadrant table — panel: CPIC 4-variant DPYD panel
+n = 8 patients with a readable toxicity grade
+
+                         grade >=3    grade <3
+panel POSITIVE                   2           0
+panel NEGATIVE                   3           3
+
+3/6 (50.0%) of panel-NEGATIVE patients had grade >=3 toxicity.
+  Published comparators for patients without an actionable DPYD variant:
+    22.7% (231/1018) systemic chemotherapy   Henricks 2018, PMID 30348537
+    13.6% (105/771)  incl. chemoradiation    Lunenburg 2018, PMID 30361102
+
+NOTE: this is a descriptive table, not a hypothesis test. It does not
+establish that any allele causes toxicity, and asl does not claim so.
