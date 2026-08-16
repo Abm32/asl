@@ -1,0 +1,239 @@
+# asl — Anukriti Oncology Safety Ledger
+
+**What it does.** Takes a DPYD pharmacogenomic result and reports what that
+result *can and cannot rule out for this patient's population*, with the
+provenance and evidence strength of every allele-function call attached. Then it
+captures the toxicity outcome afterwards, so the calls can eventually be
+corrected with evidence instead of asserted.
+
+**What it does not do.** It does not recommend doses, does not override CPIC, and
+has no code path that returns an all-clear. Those are enforced by tests, not by
+convention.
+
+```
+pip install -e .
+asl demo                                # the worked patient case
+asl quadrant --csv fixtures/cohort_template.csv
+```
+
+Runs entirely offline. CPIC's data is pinned in `data/evidence/`, so a clinic
+demonstration does not depend on connectivity.
+
+---
+
+## The problem, in one table
+
+Computed from CPIC's own Central/South Asian allele frequencies under
+Hardy-Weinberg — no Indian data required, and the command is
+`asl demo` plus `tests/test_evidence_invariants.py`:
+
+| | allele frequency (CPIC, Central/South Asian) |
+|---|---|
+| The 4 variants a guideline-conformant DPYD panel tests | **0.02538** |
+| ⤷ of which `*13` alone | **0.00000** — cannot occur in this population |
+| The 4 variants CPIC calls "Normal function" that Indians actually carry | **0.52921** (20.9×) |
+| **⇒ patients reported "Normal Metabolizer"** | **95.0%** |
+| **⇒ patients carrying ≥1 of those "Normal function" alleles** | **77.8%** |
+
+The only Indian NGS cohort observed 71.1% (54/76, D-TORCH, AIIMS). An
+expectation derived from the guideline's own reference tables lands within seven
+points of what was measured.
+
+So the test is not being run badly. **The interpretation layer converts "we found
+nothing on our list" into "this patient is normal", and destroys the distinction
+on the way.** That conversion is a software behaviour.
+
+CPIC already says the test cannot do that:
+
+> "patients without a DPYD decreased/no function variant may still experience
+> severe toxicity due to other genetic, environmental or other factors"
+>
+> "a genetic test investigating only selected decreased/no function variants
+> does not fully rule out DPD defects"
+>
+> — CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729
+
+`asl` does not make a novel clinical claim. It declines to discard a caveat the
+guideline publishes.
+
+---
+
+## What a report contains
+
+Run `asl demo` to see it. Six sections, each with a greppable rule ID so any line
+can be traced back to the record that produced it:
+
+| Section | Rule ID | What it adds |
+|---|---|---|
+| CPIC call | — | diplotype, phenotype, CPIC's own action, attributed to CPIC |
+| Tested vs not tested | `ASL-ASSAY-01` | **an untested locus is never reported as absent** |
+| Uninformative loci | `ASL-POP-01` | `*13` is 0.00000 here — this locus cannot return a positive |
+| Evidence basis | `ASL-EVID-01` | strength, assay type, PMIDs, population frequency — per allele, read from CPIC |
+| Named conflicts | `P2_*` / `P3_*` | where the literature disagrees, **stated in both directions** |
+| Residual risk | `ASL-RESID-01` | regimen-matched wild-type toxicity rate + panel sensitivity + the CPIC caveat |
+
+### The numbers it quotes, and why each
+
+- **Wild-type grade ≥3 toxicity rate** — the number that answers "what is still
+  true of me now that my test is negative?"
+  - systemic chemotherapy: **22.7% (231/1018)** — Henricks 2018, PMID 30348537
+  - including chemoradiation: **13.6% (105/771)** — Lunenburg 2018, PMID 30361102
+  - These are different populations at different doses. **With no regimen
+    supplied, `asl` refuses to quote a rate** rather than defaulting.
+- **Panel clinical sensitivity: 3.5–21.6%** across 9 studies — Ontario HTA 2021,
+  PMID 34484488. Reported as a range because the HTA computed no pooled estimate.
+- **Deliberately not used:** the "20–30% of early-onset toxicity can be
+  explained" figure. That is an attributable fraction, not a sensitivity, and
+  conflating them overstates the panel roughly threefold. It appears only inside
+  CPIC's own quoted context. Asserted by test.
+
+---
+
+## Architecture
+
+```
+CPIC live API ──(scripts/regen_evidence_tables.py --check, gated in CI)──┐
+                                                                        ▼
+anukriti-pgx-core ==0.7.3 ──▶ interpret ──▶ pipeline ──▶ report      data/evidence/
+   (CPIC truth, decides)         │            │                      (pinned, offline)
+                                 │            ├── evidence  (provenance per allele)
+                                 │            ├── flags     (named conflicts)
+                                 │            └── residual  (what is not excluded)
+                                 │
+                                 └── refuses: over-specified genotype,
+                                     unstated panel content, uncitable allele
+                            ledger ──▶ append-only JSONL ──▶ CPIC PCEP submission
+```
+
+**The evidence layer is generated, never hand-authored.** CPIC's API already
+publishes `strength`, `findings` (which encodes assay type), `citations` and
+per-population `frequency` per allele. `asl` copies all of it and edits none of
+it; `--check` fails a build on drift. Only three fields are hand-maintained —
+cohort size, cohort ancestry, and the conflict flag — because CPIC does not
+publish them, and **none of the three may feed a phenotype** (asserted by test).
+
+That discipline exists because of a real incident: `pgx-core` carried `*6` as
+*Decreased function* against CPIC's *Normal function*. The clinical evidence
+supported our value, but it was an **undeclared deviation from the pinned source
+of truth**, and it survived four releases. It is now restored to CPIC's word,
+with the disagreement recorded as a named conflict — which is what
+`P2_DPYD_STAR6_INVITRO_CLINICAL_CONFLICT` is.
+
+---
+
+## What it refuses to do
+
+Each is enforced by a test in `tests/test_safety_properties.py`.
+
+1. **Does not recommend doses.** CPIC's recommendation is displayed as CPIC's.
+   Crossing this line makes the software *drive* clinical management — Class B/C
+   under CDSCO — rather than *inform* it.
+2. **Does not invent a population-specific activity score.** No such values
+   until the ledger supports them.
+3. **Does not override CPIC.** Disagreements are named uncertainties *alongside*
+   the call.
+4. **Does not emit an all-clear.** No input produces one; checked exhaustively
+   across every reachable zygosity combination on the actionable panel.
+5. **Does not treat `NOT_TESTED` as absent.**
+6. **Does not quote a toxicity rate without a regimen.**
+7. **Does not claim a sub-population frequency.** CPIC's `Central/South Asian` is
+   the finest granularity the data supports; a missing population omits the
+   frequency rather than substituting European.
+8. **Does not let an LLM touch a number.** (`narrate` is not yet implemented; when
+   it is, it renders only what is in the record and is validated against it.)
+9. **Does not accept PHI.** Field-name denylist plus value pattern checks on the
+   CSV path, because that is how a spreadsheet column actually arrives.
+10. **Does not resolve an over-specified genotype by dropping alleles.** If more
+    than two variant copies are detected it refuses, because the engine's
+    diplotype then omits alleles that were found.
+
+---
+
+## Running it against a site's data
+
+`fixtures/cohort_template.csv` is the column layout to ask for. One row per
+patient, no identifiers.
+
+```
+asl quadrant --csv their_data.csv
+```
+
+produces the four-quadrant table — panel status × toxicity — and the cell that
+matters:
+
+```
+                         grade >=3    grade <3
+panel POSITIVE                   2           0
+panel NEGATIVE                   3           3
+
+3/6 (50.0%) of panel-NEGATIVE patients had grade >=3 toxicity.
+  Published comparators: 22.7% systemic (PMID 30348537),
+                         13.6% incl. chemoradiation (PMID 30361102)
+```
+
+**That is the question a retrospective exists to settle:** how many patients had
+severe toxicity while testing negative on every panel variant? It is descriptive,
+not a hypothesis test, and the output says so.
+
+`asl.ledger.quadrant()` is stricter than the CLI: it **excludes** any patient
+whose assay did not cover every panel locus, because such a patient cannot be
+called panel-negative. Counting them as negative is the exact error this package
+exists to prevent.
+
+---
+
+## Honest limitations
+
+- **The Indian evidence base is thin and partly biased.** Two of the five
+  published Indian DPYD studies tested *only* patients who had already developed
+  grade 3+ toxicity (Patil 2016: 12 of 34; Sahu 2016: 28 of 506), which inflates
+  any apparent genotype–toxicity association. Genotyped **without** toxicity
+  selection: ~451 patients across two centres — Pavithran 2021 (n=375, Amrita
+  Kochi, ASCO abstract only) and D-TORCH (n=76, AIIMS). **The methodologically
+  stronger of the two found no association** (OR 0.71, p=0.612).
+- **c.496A>G and `*6` are contested, not established.** Pavithran reports
+  c.496A>G in 32 of 47 variant-positive patients with toxicity despite
+  pre-emptive dose reduction; D-TORCH found it in 7/76 with no signal, in the
+  same national population with a stronger method. `asl` reports both and claims
+  no elevated risk.
+- **The residual-risk numbers are not Indian.** Henricks and Lunenburg are Dutch
+  cohorts. That is a limitation, and it is also why the argument holds without
+  Indian data.
+- **Plasma uracil phenotyping would be better in principle** — it measures enzyme
+  activity and so captures causes a European-derived genotype panel misses. It is
+  not proposed because a 955-patient, 17-centre Dutch study failed to validate the
+  16 ng/mL threshold at all (de With 2022, PMID 35397172: OR 0.997, p=0.71), the
+  assay degrades within ~47 minutes at room temperature (PMID 36104927), and
+  nobody has characterised those kinetics at Indian ambient temperatures. **This
+  remains a real gap.** CMC Vellore has a validated LC-MS/MS assay and published
+  Indian data (DOI 10.2217/pme-2022-0042) and would be the site to test it.
+- **No Indian mandate exists.** No CDSCO, ICMR, MoHFW or NCG document recommends
+  pharmacogenomic testing before chemotherapy; DPYD testing costs ₹5,000–35,000
+  and is not covered by PM-JAY or any state scheme. Adoption has to come from
+  clinical usefulness, not policy.
+- **Regulatory posture.** Under CDSCO's MDSW guidance (`CDSCO/MD/GD/MDSW/01/2026`,
+  final 21 Jul 2026) this is *informs clinical management* — Class A, but still
+  requiring registration under Chapter IIIB of MDR 2017. Not exempt. Under FDA's
+  21st Century Cures §520(o)(1)(E) it likely qualifies as non-device CDS
+  *because* it enables independent review of the basis, which is what the
+  evidence-provenance display is for.
+- **Not a diagnostic device.** Research tool. Informs clinical management; does
+  not drive it.
+
+---
+
+## Status
+
+| Phase | State |
+|---|---|
+| 0 · engine correctness (`pgx-core` 0.7.2 + 0.7.3) | **done**, tagged |
+| 1 · generated evidence tables, CI drift check | **done** — 156 alleles across DPYD, NUDT15, TPMT |
+| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 74 tests |
+| 3 · `interpret` + `flags` + `report` + CLI | **done** |
+| 4 · `ledger` + API + auth | ledger done; API and auth pending |
+| 5 · `narrate` (the only LLM call) | not started |
+| 6 · site retrospective | **the go/no-go** |
+
+NUDT15/TPMT evidence tables are already generated for the second workflow
+(CPIC thiopurine 2025 update, PMID 41618934), but no NUDT15 interpretation path
+is wired yet.

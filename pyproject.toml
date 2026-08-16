@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asl"
+version = "0.1.0"
+description = "Anukriti Oncology Safety Ledger — evidence-attributed PGx interpretation and outcome capture"
+requires-python = ">=3.11"
+dependencies = [
+    "anukriti-pgx-core==0.7.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[project.scripts]
+asl = "asl.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# TestStatus is a domain enum, not a test class.
+collect_ignore_glob = []
+python_classes = ["Test*Case"]
