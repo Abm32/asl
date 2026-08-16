@@ -1,5 +1,10 @@
 # asl — Anukriti Oncology Safety Ledger
 
+> **Status: research tool, pre-1.0, not clinically validated.** Not a diagnostic
+> device. No regulatory clearance. The go/no-go site study described under
+> [Status](#status) has not been done. Read
+> [Honest limitations](#honest-limitations) before drawing conclusions from it.
+
 **What it does.** Takes a DPYD pharmacogenomic result and reports what that
 result *can and cannot rule out for this patient's population*, with the
 provenance and evidence strength of every allele-function call attached. Then it
@@ -18,6 +23,41 @@ asl quadrant --csv fixtures/cohort_template.csv
 
 Runs entirely offline. CPIC's data is pinned in `data/evidence/`, so a clinic
 demonstration does not depend on connectivity.
+
+### Where to start
+
+| If you want | Read |
+|---|---|
+| the argument, in one table | [The problem, in one table](#the-problem-in-one-table) |
+| a real report, without installing | [`out/demo_panel_negative.txt`](out/demo_panel_negative.txt), [`out/demo_with_sequencing.txt`](out/demo_with_sequencing.txt) |
+| what it will not do, and why | [What it refuses to do](#what-it-refuses-to-do) |
+| how the pieces fit | [Architecture](#architecture) |
+| to run it on your own cohort | [Running it against a site's data](#running-it-against-a-sites-data) |
+| to contribute | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| to report a wrong report | [`SECURITY.md`](SECURITY.md) — a misleading output is a reportable defect here |
+
+### Repository layout
+
+```
+src/asl/
+  models.py      the NOT_TESTED vs ABSENT distinction, as types
+  interpret.py   the only call site into anukriti-pgx-core; never overrides it
+  evidence.py    reads the pinned CPIC tables; refuses uncitable claims
+  residual.py    what a result does not exclude; no "no risk" code path exists
+  flags.py       named uncertainties (P2/P3 conflicts, P4 pending CPIC changes)
+  pipeline.py    assembles the record; four preconditions before the engine runs
+  report.py      renders the record and nothing else
+  ledger.py      append-only outcome capture; recursive PHI refusal
+  cli.py         asl demo | panels | interpret | quadrant
+data/evidence/   generated from CPIC's API, never hand-edited (CI checks drift)
+scripts/         regen_evidence_tables.py [--check]
+tests/           114 tests; every refusal above has one
+out/             worked outputs, regenerated on release
+fixtures/        the CSV column layout to ask a site for
+```
+
+Sole dependency: `anukriti-pgx-core==0.7.3`, pinned exactly — a new engine
+version carries CPIC table updates that need clinical regression review first.
 
 ---
 
@@ -208,6 +248,9 @@ panel NEGATIVE                   3           3
                          13.6% incl. chemoradiation (PMID 30361102)
 ```
 
+(That is the shipped 8-row template; two rows are excluded from the percentage
+because they are panel-positive.)
+
 **That is the question a retrospective exists to settle:** how many patients had
 severe toxicity while testing negative on every panel variant? It is descriptive,
 not a hypothesis test, and the output says so.
@@ -274,3 +317,30 @@ exists to prevent.
 NUDT15/TPMT evidence tables are already generated for the second workflow
 (CPIC thiopurine 2025 update, PMID 41618934), but no NUDT15 interpretation path
 is wired yet.
+
+## Where this sits in the platform
+
+| Repo | Role |
+|---|---|
+| [`anukriti-pgx-core`](https://github.com/AnukritiAi-hq/anukriti-pgx-core) | the deterministic CPIC engine. Decides the phenotype. `asl` never overrides it. |
+| **`asl`** (this repo) | what the phenotype leaves out: provenance, residual risk, outcome capture |
+| [`anukriti-api`](https://github.com/AnukritiAi-hq/anukriti-api) | mounts `asl` at `POST /asl/dpyd/interpret`, on the **authenticated** surface because it takes a patient genotype |
+| [`anukriti-main`](https://github.com/AnukritiAi-hq/anukriti-main) | frontend; `api.asl.*` client seam exists, no UI yet |
+| [`anukriti_docs`](https://github.com/AnukritiAi-hq/anukriti_docs) | `ONCOLOGY_SOLUTION_AND_ARCHITECTURE_2026-08-16.md` — the full problem derivation, five research passes, and every defect round in this package |
+
+`asl` is a sibling repo rather than a PyPI package, so `anukriti-api` imports it
+via `PYTHONPATH` and degrades to `503` if it is absent.
+
+## Citation
+
+If this package or its argument informs published work, cite the analysis rather
+than the code — the load-bearing claims are other people's:
+
+- CPIC DPYD guideline: Amstutz U et al., *Clin Pharmacol Ther* 2018;103(2):210-216. PMID 29152729
+- The Indian cohort: Baskarane, Divakar, … Batra, *Front Pharmacol* 2026;17:1732128. doi 10.3389/fphar.2026.1732128
+- Residual-risk rates: Henricks LM et al., *Lancet Oncol* 2018. PMID 30348537; Lunenburg CATC et al., *Eur J Cancer* 2018. PMID 30361102
+- Zero reference frequency ≠ absence: Chan SL, Zhang J, Pirmohamed M, *Br J Cancer* 2024;131:498-514. PMID 38886557
+
+## Licence
+
+Apache-2.0. See [`LICENSE`](LICENSE).

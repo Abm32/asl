@@ -1,0 +1,547 @@
+
+############################################################################
+# PATIENT MCC-001
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*1
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD  (for capecitabine)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : (none)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:21+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-002
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/HapB3
+  Detected    : HapB3x1  (1 variant copy total)
+  Phenotype   : Intermediate Metabolizer
+  CPIC action : REDUCE_50PCT  (for capecitabine)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T
+  Tested & FOUND    : c.1129-5923C>G, c.1236G>A (HapB3) (het, 1 copy)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-EVID-01]  EVIDENCE BASIS OF EACH FUNCTION CALL
+  c.1129-5923C>G, c.1236G>A (HapB3)
+    CPIC function : Decreased function (activity 0.5)
+    Strength      : Strong
+    Basis         : ex_vivo  [CPIC findings: 5-fluorouracil (ex vivo)]
+    Citations     : PMID 28295243
+    Frequency     : 0.01966 in Central/South Asian (CPIC)
+
+[P4_DPYD_HAPB3_CPIC_UPDATE_PENDING]
+  c.1129-5923C>G, c.1236G>A (HapB3): CPIC has announced a revision to this
+  allele's own value that is not yet published. The recommendation above is
+  CPIC's current published one; asl does not pre-apply the announced change.
+    Announced 2026-07-09, expected fall 2026.
+    Source: CPIC Comment on Pending DPYD Guideline Update, Whirl-Carrillo M, blog.clinpgx.org, 9 July 2026
+    CPIC's value TODAY (used above): activity value 0.5; heterozygote activity score 1.5; Intermediate Metabolizer; CPIC action REDUCE_50PCT
+    CPIC's ANNOUNCED value (not applied): activity value 0.75; heterozygote activity score 1.75; recommendation is to initiate cycle 1 at 75% of the intended dose, with careful evaluation for escalation toward standard dosing in subsequent cycles if no clinically significant toxicity
+    Scope: CPIC states this change is specific to c.1129-5923C>G (rs75017182, the causal HapB3 allele) and must NOT be applied to other variants that previously shared the same allele value.
+    Why this matters here: In CPIC's own Central/South Asian frequency data HapB3 is 0.019658 of the 0.02538 total actionable allele frequency — 77.5%. It is the overwhelming majority of everything a guideline-conformant DPYD panel can find in this population, so a change to its dose recommendation changes what most Indian panel-positive patients are told.
+    What asl does: Reports CPIC's currently published value unchanged, and flags alongside it that CPIC has announced a revision. asl does not pre-apply the announced value: doing so would be an undeclared deviation from the pinned source of truth in the opposite direction from the 0.7.2 *6 incident, and the pre-publication text is not the guideline.
+    CAVEAT: The 75% figure is from a pre-publication comment, not the final guideline, and CPIC's own database still shows 0.5. Treat the announced value as notice that the recommendation is moving, not as a value to dose on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  RATE WITHHELD — DOES NOT APPLY TO THIS PATIENT:
+    No wild-type toxicity rate is quoted because a variant allele was found
+    in this patient. The published grade >=3 rates are rates among patients
+    WITHOUT an actionable DPYD variant (Henricks 2018, PMID 30348537;
+    Lunenburg 2018, PMID 30361102). This patient is not in that group, so no
+    figure from it is shown here — for a decreased- or no-function carrier
+    it would understate the risk, and a number on the page is read even when
+    the sentence around it says not to. What applies here is the CPIC
+    recommendation shown above, together with the caveat below: the panel
+    having found something does not mean it found everything. Found:
+    c.1129-5923C>G, c.1236G>A (HapB3).
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-003
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*1
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD  (for fluorouracil)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : (none)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-004
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*1
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD  (for capecitabine)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : (none)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-005
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*2A
+  Detected    : *2Ax1  (1 variant copy total)
+  Phenotype   : Intermediate Metabolizer
+  CPIC action : REDUCE_50PCT  (for capecitabine)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : c.1905+1G>A (*2A) (het, 1 copy)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-EVID-01]  EVIDENCE BASIS OF EACH FUNCTION CALL
+  c.1905+1G>A (*2A)
+    CPIC function : No function (activity 0.0)
+    Strength      : Strong
+    Basis         : in_vitro  [CPIC findings: 5-fluorouracil (in vitro)]
+    Citations     : PMID 23328581
+    Frequency     : 0.00508 in Central/South Asian (CPIC)
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  RATE WITHHELD — DOES NOT APPLY TO THIS PATIENT:
+    No wild-type toxicity rate is quoted because a variant allele was found
+    in this patient. The published grade >=3 rates are rates among patients
+    WITHOUT an actionable DPYD variant (Henricks 2018, PMID 30348537;
+    Lunenburg 2018, PMID 30361102). This patient is not in that group, so no
+    figure from it is shown here — for a decreased- or no-function carrier
+    it would understate the risk, and a number on the page is read even when
+    the sentence around it says not to. What applies here is the CPIC
+    recommendation shown above, together with the caveat below: the panel
+    having found something does not mean it found everything. Found:
+    c.1905+1G>A (*2A).
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-006
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*1
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD  (for capecitabine)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : (none)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-007
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*1
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD  (for capecitabine)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : (none)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
+
+############################################################################
+# PATIENT MCC-008
+############################################################################
+============================================================================
+DPYD PHARMACOGENOMIC INTERPRETATION
+Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+============================================================================
+
+CPIC CALL (unmodified, attributed to CPIC)
+  Diplotype   : *1/*1
+  Phenotype   : Normal Metabolizer
+  CPIC action : STANDARD  (for fluorouracil)
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
+
+[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested & FOUND    : (none)
+
+  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
+  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
+  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
+  panel'. An untested locus is not a negative result.
+
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
+  c.1679T>G (*13)
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
+
+[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+
+  CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
+    (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
+
+  Regimen-matched rate (systemic): 22.7% (231/1018) of patients without an
+  actionable DPYD variant experienced grade >=3 toxicity.
+    Source: Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, systemic fluoropyrimidine chemotherapy
+
+  Panel sensitivity: 3.5-21.6% clinical sensitivity for grade >=3
+  fluoropyrimidine toxicity across 9 studies (Ontario Health Technology
+  Assessment 2021, PMID 34484488; no pooled estimate was computed).
+  Specificity 95-100%.
+
+----------------------------------------------------------------------------
+WHAT THIS REPORT DOES NOT DO
+  It does not recommend a dose. The CPIC recommendation above is CPIC's.
+  It does not override CPIC. Where the literature disagrees, the
+  disagreement is flagged alongside CPIC's call, never instead of it.
+  It does not state that this patient is at elevated risk. No such finding
+  is established.
+  It does not treat an untested locus as a negative result.
+----------------------------------------------------------------------------
+Generated 2026-08-16T18:36:22+00:00
+Research tool. Not a diagnostic device. Informs clinical management; does not drive it.

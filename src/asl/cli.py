@@ -72,15 +72,23 @@ def _assay(
     "tested & negative". That is the precise conflation this package exists to
     prevent, and a default is what allowed it.
 
-    Refuses when a genotype is supplied for a locus the chosen panel does not
-    cover. That combination is contradictory — the spreadsheet says the locus was
-    read, the panel says it was never assayed — and resolving it either way loses
-    information: marking the locus NOT_TESTED discards an observed variant, and
-    marking it TESTED silently widens the panel the report attributes its
+    Refuses when an actual genotype is supplied for a locus the chosen panel does
+    not cover. That combination is contradictory — the spreadsheet says the locus
+    was read, the panel says it was never assayed — and resolving it either way
+    loses information: marking the locus NOT_TESTED discards an observed variant,
+    and marking it TESTED silently widens the panel the report attributes its
     conclusions to.
+
+    A ``None`` for an off-panel locus is **not** that contradiction and is
+    accepted. It means an empty column, which observes nothing: it discards no
+    genotype and widens no panel. Refusing it made
+    ``fixtures/cohort_template.csv`` — the layout this package asks sites to fill
+    in — refuse every row under the default panel, because the template carries
+    the four South Asian columns for sites that can fill them and leaves them
+    blank for sites that cannot.
     """
     label, loci = PANELS[panel]
-    off_panel = sorted(set(genotypes) - set(loci))
+    off_panel = sorted(r for r in set(genotypes) - set(loci) if genotypes[r] is not None)
     if off_panel:
         raise InterpretationRefused(
             "genotype supplied for "
@@ -208,6 +216,22 @@ def _row_genotypes(row: dict[str, str]) -> dict[str, Zygosity | None]:
     return out
 
 
+def _row_drug(row: dict[str, str], default: str) -> str:
+    """Read the drug column, accepting either name the template has used.
+
+    ``fixtures/cohort_template.csv`` calls it ``fluoropyrimidine_drug`` because
+    that is unambiguous on a spreadsheet a site fills in by hand; the API and the
+    flags call it ``drug``. Both are accepted rather than silently falling back to
+    the default, because falling back would label a 5-FU patient's report with
+    capecitabine and say nothing about it.
+    """
+    for key in ("drug", "fluoropyrimidine_drug"):
+        value = (row.get(key) or "").strip()
+        if value:
+            return value.lower()
+    return default
+
+
 def cmd_interpret(args: argparse.Namespace) -> int:
     path = Path(args.csv)
     rows = list(csv.DictReader(path.open()))
@@ -223,7 +247,7 @@ def cmd_interpret(args: argparse.Namespace) -> int:
                 _row_genotypes(row),
                 Regimen(row.get("regimen", "unknown").strip().lower() or "unknown"),
                 row.get("population") or args.population,
-                Drug((row.get("drug") or args.drug).strip().lower()),
+                Drug(_row_drug(row, args.drug)),
             )
             print(render(build(assay)))
         except (InterpretationRefused, ValueError) as exc:

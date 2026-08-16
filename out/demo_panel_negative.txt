@@ -9,7 +9,7 @@ Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South
 CPIC CALL (unmodified, attributed to CPIC)
   Diplotype   : *1/*1
   Phenotype   : Normal Metabolizer
-  CPIC action : STANDARD
+  CPIC action : STANDARD  (for capecitabine)
   Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
   NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
 
@@ -23,13 +23,19 @@ CPIC CALL (unmodified, attributed to CPIC)
   (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
   panel'. An untested locus is not a negative result.
 
-[ASL-POP-01]  LOCI THAT CANNOT RETURN A POSITIVE HERE
+[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
   c.1679T>G (*13)
-    CPIC allele frequency in Central/South Asian is 0.00000 — this locus
-    cannot return a positive result in this population
+    CPIC reports an allele frequency of 0.00000 in Central/South Asian, so a
+    positive result here is expected to be very rare and this locus
+    contributes little to this panel. NOTE: a 0.00000 reference frequency is
+    an absence of observation in a reference panel, not proof the variant is
+    absent from the population — this variant has been reported in patients
+    from populations where its reference frequency is 0% (Chan 2024, PMID
+    38886557). A positive call at this locus must still be acted on.
 
 [ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
-  No variant was found among the loci tested.
+  No variant was found at the 4 loci that returned a call.
+  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
 
   CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
     (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
@@ -52,5 +58,5 @@ WHAT THIS REPORT DOES NOT DO
   is established.
   It does not treat an untested locus as a negative result.
 ----------------------------------------------------------------------------
-Generated 2026-08-16T11:43:56+00:00
+Generated 2026-08-16T18:36:15+00:00
 Research tool. Not a diagnostic device. Informs clinical management; does not drive it.

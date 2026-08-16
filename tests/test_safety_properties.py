@@ -793,3 +793,107 @@ def test_no_pending_change_flag_for_an_allele_without_one() -> None:
 def test_a_panel_negative_patient_gets_no_pending_change_flag() -> None:
     interp = build(_assay({}))
     assert interp.flags == ()
+
+
+# ---------------------------------------------------------------------------
+# The shipped CSV template must actually work. Two defects found by running
+# `asl interpret` against fixtures/cohort_template.csv — the file this package
+# asks partner sites to fill in — rather than against a constructed dict.
+# ---------------------------------------------------------------------------
+
+
+def _template_path():
+    from pathlib import Path
+
+    return Path(__file__).resolve().parents[1] / "fixtures" / "cohort_template.csv"
+
+
+def test_the_shipped_template_interprets_on_the_default_panel() -> None:
+    """Every row of the template must produce a report, not a refusal.
+
+    It did not. The template carries the four South Asian columns for sites that
+    can fill them and leaves them blank for sites that cannot, and the off-panel
+    check refused any *key* outside the panel — including a blank one. So the
+    default invocation of the documented entry point refused all eight rows.
+
+    A blank off-panel column observes nothing: it discards no genotype and widens
+    no panel, so it is not the contradiction the refusal exists to catch.
+    """
+    import argparse
+    import io
+    from contextlib import redirect_stdout
+
+    from asl.cli import cmd_interpret
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        cmd_interpret(
+            argparse.Namespace(
+                csv=str(_template_path()),
+                panel="cpic4",
+                population="Central/South Asian",
+                drug="capecitabine",
+            )
+        )
+    out = buf.getvalue()
+    assert "REFUSED" not in out
+    assert out.count("DPYD PHARMACOGENOMIC INTERPRETATION") == 8
+
+
+def test_a_real_off_panel_genotype_is_still_refused(tmp_path) -> None:
+    """The relaxation above must not weaken the refusal it narrowed.
+
+    A *called* genotype outside the panel is still contradictory and still a
+    refusal — otherwise the panel silently widens.
+    """
+    import argparse
+    import io
+    from contextlib import redirect_stdout
+
+    from asl.cli import cmd_interpret
+
+    path = tmp_path / "off_panel.csv"
+    path.write_text(
+        "anonymised_id,rs3918290,rs55886062,rs67376798,rs56038477,rs1801265\n"
+        "X1,0,0,0,0,1\n"
+    )
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        cmd_interpret(
+            argparse.Namespace(
+                csv=str(path),
+                panel="cpic4",
+                population="Central/South Asian",
+                drug="capecitabine",
+            )
+        )
+    out = buf.getvalue()
+    assert "REFUSED" in out
+    assert "does not cover" in out
+
+
+def test_the_template_drug_column_is_read_not_defaulted() -> None:
+    """The template calls it ``fluoropyrimidine_drug``; the API calls it ``drug``.
+
+    Both are accepted. Falling back to the default instead would label the two
+    5-FU patients in the template as capecitabine and say nothing about it.
+    """
+    import argparse
+    import io
+    from contextlib import redirect_stdout
+
+    from asl.cli import cmd_interpret
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        cmd_interpret(
+            argparse.Namespace(
+                csv=str(_template_path()),
+                panel="cpic4",
+                population="Central/South Asian",
+                drug="capecitabine",
+            )
+        )
+    out = buf.getvalue()
+    assert out.count("(for fluorouracil)") == 2
+    assert out.count("(for capecitabine)") == 6
