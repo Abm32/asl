@@ -320,8 +320,27 @@ one patient appearing twice was counted as two, in two contradictory cells.
 | 6 · site retrospective | **the go/no-go** |
 
 NUDT15/TPMT evidence tables are already generated for the second workflow
-(CPIC thiopurine 2025 update, PMID 41618934), but no NUDT15 interpretation path
-is wired yet.
+(CPIC thiopurine 2025 update, PMID 41618934), and `pgx-core` 0.8.0 adds
+`NUDT15Caller`, but no NUDT15 interpretation path is wired here yet — and the
+shape it should take is now narrower than first assumed.
+
+**Why the DPYD argument does not transfer to NUDT15.** For DPYD, the activity
+score is "validated in the Caucasian population, remains unverified in other
+ethnic groups" (White 2021, PMID 34916829) — that published caveat is what the
+residual-risk section rests on. CPIC says the *opposite* for thiopurines: "given
+the robustness of the genotype–phenotype associations for both TPMT and NUDT15
+across diverse populations… the recommendations are not limited to any specific
+ancestry group." Nobody has shown CPIC wrong for NUDT15 in Indians, and the
+variant that carries the Indian signal (`*3`, rs116855232) is the most-studied in
+the gene.
+
+What CPIC *does* publish for thiopurines is a single-gene coverage caveat with a
+number on it: if only one of TPMT/NUDT15 is tested, "up to **10–15% of patients**
+[have] actionable variants in the nontested gene" — which is the realistic Indian
+scenario, since the validated low-cost ARMS-PCR assay reads NUDT15 c.415C>T and
+TPMT`*3C` and nothing else. That, plus CPIC's own note that an untested rare
+variant makes a patient "`*1` **by default**", is the honest basis for a
+thiopurine workflow. Coverage, not reinterpretation.
 
 ## Where this sits in the platform
 
