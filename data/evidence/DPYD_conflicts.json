@@ -16,7 +16,15 @@
     "releases as an undeclared deviation from CPIC.",
     "",
     "Every entry must state the disagreement in BOTH directions. An entry that",
-    "cites only the evidence against CPIC is advocacy, not a conflict record."
+    "cites only the evidence against CPIC is advocacy, not a conflict record.",
+    "",
+    "pending_guideline_changes records a change CPIC has ANNOUNCED but not yet",
+    "published. CPIC deliberately freezes its database until publication, so the",
+    "--check drift guard is blind to these by construction: the API still returns",
+    "the old value and agrees with the pinned table. The announcement is therefore",
+    "the only signal, and it has to be carried by hand until the guideline lands.",
+    "Same hard rule applies — this may not alter a phenotype, activity score or",
+    "clinical action. It is a flag stating that CPIC's own call is about to move."
   ],
   "conflicts": {
     "c.2194G>A (*6)": {
@@ -142,7 +150,11 @@
   "haplotype_flags": {
     "GENTILE_2016_THREE_SNP": {
       "rule_id": "P3_DPYD_GENTILE_HAPLOTYPE_COOCCURRENCE",
-      "alleles_required": ["c.85T>C (*9A)", "c.2194G>A (*6)", "c.496A>G"],
+      "alleles_required": [
+        "c.85T>C (*9A)",
+        "c.2194G>A (*6)",
+        "c.496A>G"
+      ],
       "citation": "Gentile G et al. Pharmacogenomics J 2016;16(4):320-325",
       "pmid": "26216193",
       "cohort_n": 94,
@@ -175,6 +187,20 @@
         }
       ],
       "phase_requirement": "Phase cannot be determined from unphased genotypes. This is ALWAYS emitted as a flag with phase_unknown, never as a call."
+    }
+  },
+  "pending_guideline_changes": {
+    "c.1129-5923C>G, c.1236G>A (HapB3)": {
+      "rule_id": "P4_DPYD_HAPB3_CPIC_UPDATE_PENDING",
+      "announced": "2026-07-09",
+      "expected_publication": "fall 2026",
+      "source": "CPIC Comment on Pending DPYD Guideline Update, Whirl-Carrillo M, blog.clinpgx.org, 9 July 2026",
+      "current_pinned_value": "activity value 0.5; heterozygote activity score 1.5; Intermediate Metabolizer; CPIC action REDUCE_50PCT",
+      "announced_value": "activity value 0.75; heterozygote activity score 1.75; recommendation is to initiate cycle 1 at 75% of the intended dose, with careful evaluation for escalation toward standard dosing in subsequent cycles if no clinically significant toxicity",
+      "scope_limit": "CPIC states this change is specific to c.1129-5923C>G (rs75017182, the causal HapB3 allele) and must NOT be applied to other variants that previously shared the same allele value.",
+      "why_this_matters_here": "In CPIC's own Central/South Asian frequency data HapB3 is 0.019658 of the 0.02538 total actionable allele frequency — 77.5%. It is the overwhelming majority of everything a guideline-conformant DPYD panel can find in this population, so a change to its dose recommendation changes what most Indian panel-positive patients are told.",
+      "what_asl_does": "Reports CPIC's currently published value unchanged, and flags alongside it that CPIC has announced a revision. asl does not pre-apply the announced value: doing so would be an undeclared deviation from the pinned source of truth in the opposite direction from the 0.7.2 *6 incident, and the pre-publication text is not the guideline.",
+      "caveat": "The 75% figure is from a pre-publication comment, not the final guideline, and CPIC's own database still shows 0.5. Treat the announced value as notice that the recommendation is moving, not as a value to dose on."
     }
   }
 }

@@ -67,10 +67,36 @@ can be traced back to the record that produced it:
 |---|---|---|
 | CPIC call | — | diplotype, phenotype, CPIC's own action, attributed to CPIC |
 | Tested vs not tested | `ASL-ASSAY-01` | **an untested locus is never reported as absent** |
-| Uninformative loci | `ASL-POP-01` | `*13` is 0.00000 here — this locus cannot return a positive |
+| Uninformative loci | `ASL-POP-01` | `*13` is 0.00000 here — very low expected yield, **not** proof of absence |
 | Evidence basis | `ASL-EVID-01` | strength, assay type, PMIDs, population frequency — per allele, read from CPIC |
 | Named conflicts | `P2_*` / `P3_*` | where the literature disagrees, **stated in both directions** |
+| Pending CPIC changes | `P4_*` | where **CPIC has announced a revision to its own value** but not published it |
 | Residual risk | `ASL-RESID-01` | regimen-matched wild-type toxicity rate + panel sensitivity + the CPIC caveat |
+
+### The one flag that no automated guard can catch
+
+`P4_DPYD_HAPB3_CPIC_UPDATE_PENDING` exists because of a real gap. On 9 July 2026
+CPIC announced that HapB3's allele value moves from **0.5 to 0.75** — a
+heterozygote's recommendation going from 50% of standard dose to **75%, starting
+cycle 1** — while stating that its database "will remain at AV=0.5 until then"
+(full guideline expected fall 2026).
+
+So the API returns 0.5, `data/evidence/` says 0.5, `--check` passes, and the fact
+that the recommendation is about to move is invisible to every automated guard.
+**In CPIC's own Central/South Asian data HapB3 is 77.5% of the entire actionable
+allele frequency** (0.019658 of 0.025380) — an Indian DPYD panel is, to a first
+approximation, a HapB3 test. So this lands on nearly every Indian patient who
+tests positive.
+
+`asl` reports CPIC's current value, flags the announced one alongside it, and
+**does not pre-apply it**. Dosing on a pre-publication comment would be an
+undeclared deviation from the pinned source of truth — the `*6` failure class,
+pointed the other way.
+
+Note also which direction this cuts: for the ~5% who test positive, a
+European-derived activity score has been **over-restricting** them, while the
+argument elsewhere in this README is that the panel **over-reassures** the
+negatives. Both are the same defect — one number doing two jobs.
 
 ### The numbers it quotes, and why each
 
@@ -239,7 +265,7 @@ exists to prevent.
 |---|---|
 | 0 · engine correctness (`pgx-core` 0.7.2 + 0.7.3) | **done**, tagged |
 | 1 · generated evidence tables, CI drift check | **done** — 156 alleles across DPYD, NUDT15, TPMT |
-| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 107 tests |
+| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 111 tests |
 | 3 · `interpret` + `flags` + `report` + CLI | **done** |
 | 4 · `ledger` + API + auth | ledger done; API and auth pending |
 | 5 · `narrate` (the only LLM call) | not started |

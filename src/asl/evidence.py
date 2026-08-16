@@ -129,6 +129,24 @@ def haplotype_flags(gene: str) -> dict:
     return _load_conflicts(gene).get("haplotype_flags", {})
 
 
+def pending_change_for(gene: str, allele_label: str) -> dict | None:
+    """A change CPIC has announced but not yet published, if one exists.
+
+    Distinct from ``conflict_for``. A conflict is the literature disagreeing with
+    CPIC; this is **CPIC disagreeing with its own currently published value** and
+    saying so in advance.
+
+    It needs its own channel because the ``--check`` drift guard cannot see it.
+    CPIC freezes its database until a guideline is published — for HapB3 it
+    states explicitly that the allele value "will remain at AV=0.5 until then" —
+    so the API and the pinned table agree, the drift check passes, and the fact
+    that the recommendation is about to move is invisible to every automated
+    guard we have. The announcement is the only signal, and until the guideline
+    lands it has to be carried by hand.
+    """
+    return _load_conflicts(gene).get("pending_guideline_changes", {}).get(allele_label)
+
+
 def uninformative_in(
     gene: str, allele_label: str, population: str | None
 ) -> str | None:

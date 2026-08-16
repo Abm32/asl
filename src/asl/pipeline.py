@@ -95,6 +95,7 @@ def build(assay: AssayResult) -> Interpretation:
             uninformative.append((call.allele_label, reason))
 
     collected = list(flags.conflict_flags(GENE, assay))
+    collected.extend(flags.pending_change_flags(GENE, assay))
     hap = flags.haplotype_flag(GENE, assay)
     if hap:
         collected.append(hap)

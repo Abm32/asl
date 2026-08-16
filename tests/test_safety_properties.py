@@ -741,3 +741,55 @@ def test_blank_clinical_action_is_refused_rather_than_printed() -> None:
             build(_assay({}))
     finally:
         interpret_mod.action_for = real
+
+
+# ---------------------------------------------------------------------------
+# Pending CPIC guideline changes. CPIC announced on 2026-07-09 that HapB3's
+# allele value moves from 0.5 to 0.75, while explicitly leaving its database at
+# 0.5 until the guideline publishes in fall 2026.
+#
+# This is the one class of change the --check drift guard cannot detect: the API
+# and the pinned table agree, so nothing automated fires. It matters here more
+# than anywhere else because HapB3 is 77.5% of the actionable allele frequency
+# CPIC publishes for Central/South Asian — most Indian panel-positive patients
+# are HapB3 carriers.
+# ---------------------------------------------------------------------------
+
+
+def test_hapb3_carrier_is_told_cpic_has_announced_a_change() -> None:
+    interp = build(_assay({"rs56038477": Zygosity.HET}))
+    ids = {f.rule_id for f in interp.flags}
+    assert "P4_DPYD_HAPB3_CPIC_UPDATE_PENDING" in ids
+    text = render(interp)
+    assert "P4_DPYD_HAPB3_CPIC_UPDATE_PENDING" in text
+    # Both values must appear, each labelled as what it is.
+    assert "CPIC's value TODAY" in text
+    assert "ANNOUNCED value (not applied)" in text
+
+
+def test_the_announced_value_is_not_applied_to_the_phenotype() -> None:
+    """The flag is notice, never a recalculation.
+
+    Pre-applying a value from a pre-publication blog comment would be an
+    undeclared deviation from the pinned source of truth — the same failure class
+    as the 0.7.2 ``*6`` incident, pointed the other way. The engine's answer must
+    be untouched.
+    """
+    interp = build(_assay({"rs56038477": Zygosity.HET}))
+    assert interp.phenotype == "Intermediate Metabolizer"
+    assert interp.cpic_recommendation_action == "REDUCE_50PCT"
+    # And the evidence record still carries CPIC's published activity value.
+    hapb3 = [e for e in interp.evidence if "HapB3" in e.allele_label]
+    assert hapb3 and hapb3[0].activity_value == "0.5"
+
+
+def test_no_pending_change_flag_for_an_allele_without_one() -> None:
+    """The flag is per-allele, not a blanket disclaimer."""
+    interp = build(_assay({"rs3918290": Zygosity.HET}))
+    ids = {f.rule_id for f in interp.flags}
+    assert "P4_DPYD_HAPB3_CPIC_UPDATE_PENDING" not in ids
+
+
+def test_a_panel_negative_patient_gets_no_pending_change_flag() -> None:
+    interp = build(_assay({}))
+    assert interp.flags == ()

@@ -68,6 +68,57 @@ def conflict_flags(gene: str, assay: AssayResult) -> tuple[Flag, ...]:
     return tuple(out)
 
 
+def pending_change_flags(gene: str, assay: AssayResult) -> tuple[Flag, ...]:
+    """Flag found alleles whose CPIC value is announced to change but unpublished.
+
+    This is not a literature conflict — it is CPIC saying in advance that its own
+    published value is about to move, while deliberately leaving the database at
+    the old value until the guideline lands. The drift check therefore cannot see
+    it: the API and the pinned table agree.
+
+    The flag exists so the report says so, and it explicitly does **not**
+    pre-apply the announced value. Dosing on a pre-publication blog comment would
+    be an undeclared deviation from the pinned source of truth — the same failure
+    class as the 0.7.2 ``*6`` incident, pointed the other way. What a clinician
+    needs is CPIC's current recommendation plus notice that it is changing, and
+    that is exactly what this emits.
+    """
+    out: list[Flag] = []
+    for call in assay.found:
+        label = call.allele_label
+        if not label:
+            continue
+        spec = evidence.pending_change_for(gene, label)
+        if spec is None:
+            continue
+        detail = (
+            f"    Announced {spec.get('announced','')}, expected "
+            f"{spec.get('expected_publication','')}.\n"
+            f"    Source: {spec.get('source','')}\n"
+            f"    CPIC's value TODAY (used above): "
+            f"{spec.get('current_pinned_value','')}\n"
+            f"    CPIC's ANNOUNCED value (not applied): "
+            f"{spec.get('announced_value','')}\n"
+            f"    Scope: {spec.get('scope_limit','')}\n"
+            f"    Why this matters here: {spec.get('why_this_matters_here','')}\n"
+            f"    What asl does: {spec.get('what_asl_does','')}\n"
+            f"    CAVEAT: {spec.get('caveat','')}"
+        )
+        out.append(
+            Flag(
+                rule_id=spec["rule_id"],
+                summary=(
+                    f"{label}: CPIC has announced a revision to this allele's own "
+                    f"value that is not yet published. The recommendation above is "
+                    f"CPIC's current published one; asl does not pre-apply the "
+                    f"announced change."
+                ),
+                detail=detail,
+            )
+        )
+    return tuple(out)
+
+
 def haplotype_flag(gene: str, assay: AssayResult) -> Flag | None:
     """Emit the Gentile-2016 co-occurrence flag when all three alleles are present.
 
