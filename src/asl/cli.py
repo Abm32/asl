@@ -270,6 +270,22 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     rows = list(csv.DictReader(path.open()))
     _, loci = PANELS[args.panel]
 
+    # A spreadsheet can list the same patient twice — a corrected row appended
+    # below the original is how a site actually edits a CSV. Counting both would
+    # double-count one patient, and in the observed ledger case put them in two
+    # contradictory cells. Later rows win, and the count is reported rather than
+    # silently applied.
+    deduped: dict[str, dict[str, str]] = {}
+    unidentified = 0
+    for row in rows:
+        pid = (row.get("anonymised_id") or row.get("patient_id") or "").strip()
+        if not pid:
+            unidentified += 1
+            continue
+        deduped[pid] = row
+    superseded = len(rows) - unidentified - len(deduped)
+    rows = list(deduped.values())
+
     cells = {(True, True): 0, (True, False): 0, (False, True): 0, (False, False): 0}
     missing = 0
     incomplete = 0
@@ -290,6 +306,17 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     print(f"Four-quadrant table — panel: {PANELS[args.panel][0]}")
     print(f"n = {n} patients with a readable toxicity grade"
           + (f" ({missing} skipped, grade not recorded)" if missing else ""))
+    if superseded:
+        print(
+            f"    {superseded} row(s) superseded: the same anonymised_id appeared "
+            f"more than once, and the last occurrence was used. Counting both "
+            f"would count one patient twice."
+        )
+    if unidentified:
+        print(
+            f"    {unidentified} row(s) skipped: no anonymised_id, so duplicates "
+            f"cannot be detected for them."
+        )
     if incomplete:
         print(
             f"    {incomplete} excluded: at least one panel locus returned no "

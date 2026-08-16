@@ -51,7 +51,7 @@ src/asl/
   cli.py         asl demo | panels | interpret | quadrant
 data/evidence/   generated from CPIC's API, never hand-edited (CI checks drift)
 scripts/         regen_evidence_tables.py [--check]
-tests/           114 tests; every refusal above has one
+tests/           140 tests; every refusal above has one
 out/             worked outputs, regenerated on release
 fixtures/        the CSV column layout to ask a site for
 ```
@@ -260,6 +260,11 @@ whose assay did not cover every panel locus, because such a patient cannot be
 called panel-negative. Counting them as negative is the exact error this package
 exists to prevent.
 
+Both paths also **supersede duplicates**: a patient recorded twice is counted
+once, using the later row, and the superseded count is printed. The log is
+append-only by design, so a correction *is* a new row — before this was handled,
+one patient appearing twice was counted as two, in two contradictory cells.
+
 ---
 
 ## Honest limitations
@@ -308,9 +313,9 @@ exists to prevent.
 |---|---|
 | 0 · engine correctness (`pgx-core` 0.7.2 + 0.7.3) | **done**, tagged |
 | 1 · generated evidence tables, CI drift check | **done** — 156 alleles across DPYD, NUDT15, TPMT |
-| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 111 tests |
+| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 140 tests |
 | 3 · `interpret` + `flags` + `report` + CLI | **done** |
-| 4 · `ledger` + API + auth | ledger done; API and auth pending |
+| 4 · `ledger` + API + auth | ledger done + hardened; HTTP layer live in `anukriti-api` (authenticated) |
 | 5 · `narrate` (the only LLM call) | not started |
 | 6 · site retrospective | **the go/no-go** |
 

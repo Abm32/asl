@@ -68,7 +68,8 @@ Two conventions that are worth more than they look:
   |---|---|---|
   | 1 | input shape | the carrier — every case was panel-negative |
   | 2 | patient type | the shipped CSV template, which refused all 8 rows |
-  | 3 | the entry point | *(open — the ledger and NUDT15 have had no adversarial pass)* |
+  | 3 | the entry point | the ledger — eight defects, two of them severe |
+  | 4 | the ledger | *(open — NUDT15 has no interpretation path yet, and `narrate` does not exist)* |
 
   An adversarial pass inherits the blind spot of whatever example it is built
   around. Pick an example the last one didn't use.

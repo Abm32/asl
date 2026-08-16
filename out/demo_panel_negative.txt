@@ -58,5 +58,5 @@ WHAT THIS REPORT DOES NOT DO
   is established.
   It does not treat an untested locus as a negative result.
 ----------------------------------------------------------------------------
-Generated 2026-08-16T18:36:15+00:00
+Generated 2026-08-16T18:56:38+00:00
 Research tool. Not a diagnostic device. Informs clinical management; does not drive it.
