@@ -14,6 +14,7 @@ from __future__ import annotations
 from .models import (
     AssayResult,
     Basis,
+    Drug,
     EvidenceRecord,
     Flag,
     Interpretation,
@@ -31,6 +32,7 @@ __version__ = "0.1.0"
 __all__ = [
     "AssayResult",
     "Basis",
+    "Drug",
     "EvidenceRecord",
     "Flag",
     "Interpretation",
@@ -39,7 +41,7 @@ __all__ = [
     "TestStatus",
     "VariantCall",
     "Zygosity",
+    "__version__",
     "build",
     "render",
-    "__version__",
 ]

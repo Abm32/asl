@@ -31,7 +31,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Field names that must never appear in a ledger entry. Checked on keys, so a
@@ -47,7 +47,7 @@ _PHI_FIELDS = frozenset({
 _PHI_PATTERNS = (
     (re.compile(r"\b\d{12}\b"), "a 12-digit number (Aadhaar-shaped)"),
     (re.compile(r"\b[6-9]\d{9}\b"), "a 10-digit mobile number"),
-    (re.compile(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", re.I), "an email address"),
+    (re.compile(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", re.IGNORECASE), "an email address"),
     (re.compile(r"\b\d{4}-\d{2}-\d{2}\b"), "a full date (use onset_cycle instead)"),
 )
 
@@ -92,7 +92,7 @@ class LedgerEntry:
     dose_modifications: tuple[str, ...] = ()
     cycles_received: int | None = None
     recorded_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(UTC)
     )
 
     def __post_init__(self) -> None:
@@ -139,21 +139,39 @@ class LedgerEntry:
         }
 
 
-def _reject_phi(payload: dict) -> None:
-    """Refuse anything that looks like patient-identifying information."""
+def _reject_phi(payload: dict, _path: str = "") -> None:
+    """Refuse anything that looks like patient-identifying information.
+
+    Recurses into lists and nested mappings. A flat scan was not enough: the
+    realistic leak is a free-text field that is itself a container —
+    ``dose_modifications=["reduced 25% on 1978-04-12 per Dr Rao, ph 98..."]`` and
+    a toxicity ``term`` — and those are exactly the fields a site fills in prose.
+    A scan that only reads top-level strings passes them all.
+    """
     for key, value in payload.items():
+        where = f"{_path}{key}"
         if key.lower() in _PHI_FIELDS:
             raise LedgerRefused(
-                f"field {key!r} is not accepted: the ledger holds no PHI. "
+                f"field {where!r} is not accepted: the ledger holds no PHI. "
                 f"Use an anonymised identifier assigned at the site."
             )
-        if isinstance(value, str):
-            for pattern, what in _PHI_PATTERNS:
-                if pattern.search(value):
-                    raise LedgerRefused(
-                        f"field {key!r} contains what looks like {what}. "
-                        f"The ledger holds no PHI."
-                    )
+        _scan_value(where, value)
+
+
+def _scan_value(where: str, value: object) -> None:
+    """Pattern-check one value, recursing through containers."""
+    if isinstance(value, str):
+        for pattern, what in _PHI_PATTERNS:
+            if pattern.search(value):
+                raise LedgerRefused(
+                    f"field {where!r} contains what looks like {what}. "
+                    f"The ledger holds no PHI."
+                )
+    elif isinstance(value, dict):
+        _reject_phi(value, f"{where}.")
+    elif isinstance(value, (list, tuple)):
+        for i, item in enumerate(value):
+            _scan_value(f"{where}[{i}]", item)
 
 
 def from_mapping(row: dict) -> LedgerEntry:
@@ -223,12 +241,30 @@ def read_all(path: Path) -> list[dict]:
     ]
 
 
+# Genotype tokens that mean "no variant copy at this locus". Anything outside
+# this set is not assumed negative — see ``quadrant``.
+_WILD_TYPE_TOKENS = frozenset({
+    "0", "0/0", "0|0", "hom_ref", "wt", "ref", "wild_type", "wild-type",
+})
+_VARIANT_TOKENS = frozenset({
+    "1", "2", "0/1", "1/0", "0|1", "1|0", "1/1", "1|1",
+    "het", "hom_var", "hom", "var",
+})
+
+
 def quadrant(entries: list[dict], panel_rsids: tuple[str, ...]) -> dict[str, int]:
     """Four-quadrant counts: panel status x grade >=3 toxicity.
 
     Only counts entries where every panel locus was actually tested. A patient
     whose assay skipped a panel variant cannot be called panel-negative, and
     silently counting them as such is the error this package exists to prevent.
+
+    A genotype token this function does not recognise is also **excluded**, not
+    read as negative. The earlier implementation tested membership of a short
+    literal set and treated everything else as a variant call, which made a
+    blank string a *positive* and would have read ``"0|0"`` — legal VCF phased
+    wild-type — as a variant too. Both directions are wrong, and unreadable is
+    a third state rather than either.
     """
     cells = {
         "positive_toxic": 0,
@@ -236,6 +272,7 @@ def quadrant(entries: list[dict], panel_rsids: tuple[str, ...]) -> dict[str, int
         "negative_toxic": 0,
         "negative_not_toxic": 0,
         "excluded_incomplete_panel": 0,
+        "excluded_unreadable_genotype": 0,
     }
     for e in entries:
         tested = set(e.get("rsids_tested") or [])
@@ -243,10 +280,11 @@ def quadrant(entries: list[dict], panel_rsids: tuple[str, ...]) -> dict[str, int
             cells["excluded_incomplete_panel"] += 1
             continue
         gts = e.get("genotypes") or {}
-        positive = any(
-            str(gts.get(r, "0")).strip() not in ("0", "0/0", "hom_ref", "")
-            for r in panel_rsids
-        )
+        tokens = [str(gts.get(r, "")).strip().lower() for r in panel_rsids]
+        if any(t not in _WILD_TYPE_TOKENS | _VARIANT_TOKENS for t in tokens):
+            cells["excluded_unreadable_genotype"] += 1
+            continue
+        positive = any(t in _VARIANT_TOKENS for t in tokens)
         toxic = int(e.get("max_toxicity_grade") or 0) >= 3
         key = f"{'positive' if positive else 'negative'}_{'toxic' if toxic else 'not_toxic'}"
         cells[key] += 1

@@ -146,6 +146,17 @@ Each is enforced by a test in `tests/test_safety_properties.py`.
 10. **Does not resolve an over-specified genotype by dropping alleles.** If more
     than two variant copies are detected it refuses, because the engine's
     diplotype then omits alleles that were found.
+11. **Does not quote a comparison group's rate to a patient outside it.** The
+    22.7% / 13.6% figures are rates among patients *without* an actionable
+    variant. A decreased/no-function carrier is not in that group, so no figure
+    from it appears in their report — for a Poor Metabolizer it would understate
+    the risk. A `*9A` carrier *does* stay in the group, because CPIC calls that
+    allele normal function and the published cohorts were defined by the absence
+    of an actionable variant, not of any variant.
+12. **Does not display a recommendation without naming the drug it applies to.**
+    A bare `AVOID` does not say what to avoid. `Drug` is a closed enum, and a
+    phenotype/drug pair for which the engine returns no action is refused rather
+    than rendered as an empty line.
 
 ---
 
@@ -228,7 +239,7 @@ exists to prevent.
 |---|---|
 | 0 · engine correctness (`pgx-core` 0.7.2 + 0.7.3) | **done**, tagged |
 | 1 · generated evidence tables, CI drift check | **done** — 156 alleles across DPYD, NUDT15, TPMT |
-| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 74 tests |
+| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 107 tests |
 | 3 · `interpret` + `flags` + `report` + CLI | **done** |
 | 4 · `ledger` + API + auth | ledger done; API and auth pending |
 | 5 · `narrate` (the only LLM call) | not started |

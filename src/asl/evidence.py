@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import re
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from .models import Basis, EvidenceRecord
@@ -24,7 +24,7 @@ class EvidenceError(RuntimeError):
     """Raised when the evidence layer cannot support a traceable claim."""
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_gene(gene: str) -> dict:
     path = _DATA_DIR / f"{gene}_evidence.json"
     if not path.exists():
@@ -38,7 +38,7 @@ def _load_gene(gene: str) -> dict:
     return data
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_conflicts(gene: str) -> dict:
     path = _DATA_DIR / f"{gene}_conflicts.json"
     if not path.exists():
@@ -50,7 +50,7 @@ def allele_names(gene: str) -> tuple[str, ...]:
     return tuple(_load_gene(gene)["alleles"].keys())
 
 
-@lru_cache(maxsize=None)
+@cache
 def population_keys(gene: str) -> frozenset[str]:
     """Every population key CPIC publishes a frequency under for this gene.
 

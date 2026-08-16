@@ -23,6 +23,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-# TestStatus is a domain enum, not a test class.
-collect_ignore_glob = []
+# ``TestStatus`` is a domain enum, not a test class, and pytest's default
+# ``Test*`` prefix would try to collect it. Narrowing the pattern is what stops
+# that; there are no class-based tests in this suite.
 python_classes = ["Test*Case"]

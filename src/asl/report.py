@@ -13,7 +13,7 @@ Two engine artifacts are deliberately suppressed:
 
 from __future__ import annotations
 
-from .models import Interpretation, Regimen, TestStatus
+from .models import Interpretation, Regimen
 from .residual import untested_statement
 
 _W = 76
@@ -55,7 +55,7 @@ def render(interp: Interpretation) -> str:
             f"cop{'y' if interp.copies_detected == 1 else 'ies'} total)"
         )
     out.append(f"  Phenotype   : {interp.phenotype}")
-    out.append(f"  CPIC action : {interp.cpic_recommendation_action}")
+    out.append(f"  CPIC action : {interp.cpic_recommendation_action}  (for {a.drug.value})")
     out.append(
         "  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via "
         f"anukriti-pgx-core {interp.engine_version}"
@@ -81,8 +81,7 @@ def render(interp: Interpretation) -> str:
     stmt = untested_statement(a)
     if stmt:
         out.append("")
-        for line in _wrap(stmt, "  "):
-            out.append(line)
+        out.extend(_wrap(stmt, "  "))
 
     # --- uninformative loci ----------------------------------------------
     if interp.uninformative_loci:
@@ -90,8 +89,7 @@ def render(interp: Interpretation) -> str:
         out.append("[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE")
         for label, reason in interp.uninformative_loci:
             out.append(f"  {label}")
-            for line in _wrap(reason, "    "):
-                out.append(line)
+            out.extend(_wrap(reason, "    "))
 
     # --- evidence provenance ---------------------------------------------
     if interp.evidence:
@@ -119,8 +117,7 @@ def render(interp: Interpretation) -> str:
     for flag in interp.flags:
         out.append("")
         out.append(f"[{flag.rule_id}]")
-        for line in _wrap(flag.summary, "  "):
-            out.append(line)
+        out.extend(_wrap(flag.summary, "  "))
         out.append(flag.detail)
         if flag.phase_unknown:
             out.append("    phase_unknown = TRUE")
@@ -130,27 +127,39 @@ def render(interp: Interpretation) -> str:
     out.append("")
     out.append("[ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR")
     if interp.is_panel_negative:
-        out.append("  No variant was found among the loci tested.")
+        n = len(a.tested)
+        out.append(
+            f"  No variant was found at the {n} "
+            f"{'locus' if n == 1 else 'loci'} that returned a call."
+        )
+        if a.not_tested:
+            m = len(a.not_tested)
+            out.append(
+                f"  {m} further {'locus was' if m == 1 else 'loci were'} not "
+                f"assayed — see ASL-ASSAY-01 above. This is not a negative "
+                f"result for {'it' if m == 1 else 'them'}."
+            )
     out.append("")
     out.append(f'  CPIC states: "{r.cpic_caveat}."')
     out.append(f"    ({r.cpic_citation})")
     out.append("")
     if r.quoted_rate:
-        for line in _wrap(
+        out.extend(_wrap(
             f"Regimen-matched rate ({r.regimen.value}): {r.quoted_rate} of "
             f"patients without an actionable DPYD variant experienced grade >=3 "
             f"toxicity.",
             "  ",
-        ):
-            out.append(line)
+        ))
         out.append(f"    Source: {r.rate_source}")
     else:
-        out.append("  RATE WITHHELD:")
-        for line in _wrap(r.refusal_reason or "", "    "):
-            out.append(line)
+        out.append(
+            "  RATE WITHHELD — DOES NOT APPLY TO THIS PATIENT:"
+            if not r.applies_to_this_patient
+            else "  RATE WITHHELD:"
+        )
+        out.extend(_wrap(r.refusal_reason or "", "    "))
     out.append("")
-    for line in _wrap(f"Panel sensitivity: {r.panel_sensitivity}", "  "):
-        out.append(line)
+    out.extend(_wrap(f"Panel sensitivity: {r.panel_sensitivity}", "  "))
 
     # --- boundary ---------------------------------------------------------
     out.append("")
@@ -158,14 +167,17 @@ def render(interp: Interpretation) -> str:
     out.append("WHAT THIS REPORT DOES NOT DO")
     for line in (
         "It does not recommend a dose. The CPIC recommendation above is CPIC's.",
-        "It does not override CPIC. Where the literature disagrees, the "
-        "disagreement is flagged alongside CPIC's call, never instead of it.",
-        "It does not state that this patient is at elevated risk. No such "
-        "finding is established.",
+        (
+            "It does not override CPIC. Where the literature disagrees, the "
+            "disagreement is flagged alongside CPIC's call, never instead of it."
+        ),
+        (
+            "It does not state that this patient is at elevated risk. No such "
+            "finding is established."
+        ),
         "It does not treat an untested locus as a negative result.",
     ):
-        for ln in _wrap(line, "  "):
-            out.append(ln)
+        out.extend(_wrap(line, "  "))
     out.append(_rule())
     out.append(f"Generated {interp.generated_at.isoformat(timespec='seconds')}")
     out.append(

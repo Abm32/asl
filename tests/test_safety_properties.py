@@ -13,6 +13,7 @@ import pytest
 
 from asl import (
     AssayResult,
+    Drug,
     Regimen,
     TestStatus,
     VariantCall,
@@ -49,7 +50,6 @@ def _assay(genotypes: dict[str, Zygosity], **kw) -> AssayResult:
         calls=tuple(tested + untested),
         **kw,
     )
-
 
 # ---------------------------------------------------------------------------
 # Refusal 4: no code path emits an all-clear.
@@ -612,3 +612,132 @@ def test_quadrant_excludes_no_call_patients_rather_than_calling_them_negative(
     assert "n = 1 patients" in out
     assert "1 excluded" in out
     assert "1/1 (100.0%) of panel-NEGATIVE" in out
+
+
+# ---------------------------------------------------------------------------
+# Refusal 11: a comparison group's rate is never attributed to a patient who
+# is not in that group.
+#
+# The five tests below each pin a defect found by walking a *variant-positive*
+# patient through the report, rather than the panel-negative patient every
+# earlier test used. The panel-negative path was the one the package was
+# designed around, so it was the one that was already correct.
+# ---------------------------------------------------------------------------
+
+
+def _residual_section(text: str) -> str:
+    """The residual-risk block only, up to the panel-sensitivity line."""
+    after = text.split("RESIDUAL RISK", 1)[1]
+    return after.split("Panel sensitivity", 1)[0]
+
+
+@pytest.mark.parametrize(
+    "rsid",
+    [
+        "rs3918290",   # *2A, no function   -> Poor/Intermediate Metabolizer
+        "rs55886062",  # *13, no function
+        "rs67376798",  # c.2846A>T, decreased function
+        "rs56038477",  # HapB3, decreased function
+    ],
+)
+@pytest.mark.parametrize("zyg", [Zygosity.HET, Zygosity.HOM_VAR])
+def test_wildtype_rate_is_withheld_from_a_carrier(rsid: str, zyg: Zygosity) -> None:
+    """A carrier is not in the group Henricks and Lunenburg measured.
+
+    Both published grade >=3 rates (22.7% systemic, 13.6% including
+    chemoradiation) are rates among patients *without* an actionable DPYD
+    variant. Printing one to a carrier attributes a comparison group's risk to
+    someone outside it, and for a Poor Metabolizer it does so in the reassuring
+    direction — the package's own central failure mode, aimed at the patient
+    with the most to lose.
+    """
+    interp = build(_assay({rsid: zyg}))
+    assert interp.residual.quoted_rate is None
+    assert interp.residual.applies_to_this_patient is False
+    section = _residual_section(render(interp))
+    assert "22.7" not in section
+    assert "13.6" not in section
+    assert "DOES NOT APPLY TO THIS PATIENT" in section
+
+
+def test_wildtype_rate_is_kept_for_a_normal_function_carrier() -> None:
+    """`*9A` is CPIC *normal function*, so its carrier stays in the group.
+
+    Henricks and Lunenburg defined their comparison group by the absence of an
+    *actionable* (decreased/no function) variant, not by the absence of any
+    variant. Withholding the rate from a `*9A` carrier would over-correct and
+    strip the one number a panel-negative report exists to deliver.
+    """
+    calls = [
+        _tested(r, Zygosity.HOM_REF) for r in CPIC_ACTIONABLE
+    ] + [_tested("rs1801265", Zygosity.HET)] + [
+        _untested(r)
+        for r in ALL_RSIDS
+        if r not in CPIC_ACTIONABLE and r != "rs1801265"
+    ]
+    assay = AssayResult(
+        gene="DPYD",
+        panel_name="CPIC 4 + *9A",
+        calls=tuple(calls),
+        regimen=Regimen.SYSTEMIC,
+        population="Central/South Asian",
+    )
+    interp = build(assay)
+    assert interp.residual.quoted_rate == "22.7% (231/1018)"
+    assert interp.residual.applies_to_this_patient is True
+
+
+def test_panel_negative_line_states_how_many_loci_returned_a_call() -> None:
+    """"No variant was found" must be scoped to what was actually read.
+
+    With three of the four CPIC loci returning no call, the earlier wording —
+    "No variant was found among the loci tested" — read as a clean four-variant
+    panel. One locus of reassurance was being presented as four.
+    """
+    calls = [_tested("rs3918290", Zygosity.HOM_REF)] + [
+        _untested(r) for r in ALL_RSIDS if r != "rs3918290"
+    ]
+    assay = AssayResult(
+        gene="DPYD",
+        panel_name="CPIC 4-variant DPYD panel (1 of 4 loci returned a call)",
+        calls=tuple(calls),
+        regimen=Regimen.SYSTEMIC,
+        population="Central/South Asian",
+    )
+    text = render(build(assay))
+    assert "No variant was found at the 1 locus that returned a call." in text
+    assert "12 further loci were not assayed" in text
+    assert "among the loci tested" not in text
+
+
+@pytest.mark.parametrize("drug", list(Drug))
+def test_cpic_action_always_names_the_drug_it_applies_to(drug: Drug) -> None:
+    """A bare ``AVOID`` does not say what to avoid.
+
+    CPIC publishes DPYD recommendations per drug and the engine is queried per
+    drug, so the report must say which one it is displaying. The drug was
+    hardcoded to capecitabine inside ``interpret`` and never surfaced, which
+    made a 5-FU patient's report silently mislabelled.
+    """
+    assay = _assay({}, drug=drug)
+    text = render(build(assay))
+    assert f"(for {drug.value})" in text
+
+
+def test_blank_clinical_action_is_refused_rather_than_printed() -> None:
+    """The engine returns '' for an unknown pair by design; a report may not.
+
+    ``action_for`` never raises — it is on the hot phenotype path — so an
+    unrecognised phenotype/drug pair yields an empty string. Rendered, that is a
+    "CPIC action :" line with nothing after it, which reads as "nothing to do"
+    rather than "we could not determine what CPIC advises".
+    """
+    import asl.interpret as interpret_mod
+
+    real = interpret_mod.action_for
+    interpret_mod.action_for = lambda *_a, **_k: ""
+    try:
+        with pytest.raises(InterpretationRefused, match="no CPIC clinical action"):
+            build(_assay({}))
+    finally:
+        interpret_mod.action_for = real

@@ -19,7 +19,7 @@ first may silently become the second.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 
 
@@ -65,6 +65,24 @@ class Regimen(str, Enum):
     SYSTEMIC = "systemic"
     CHEMORADIATION = "chemoradiation"
     UNKNOWN = "unknown"
+
+
+class Drug(str, Enum):
+    """The fluoropyrimidine the CPIC recommendation is being read for.
+
+    CPIC publishes DPYD recommendations per drug, and ``asl`` displays CPIC's
+    recommendation, so the report has to say which drug it is displaying one
+    for. Without this the report showed a bare ``AVOID`` with no drug attached —
+    correct for a fluoropyrimidine and meaningless, or worse, over-general, for
+    anything else a reader might have in mind.
+
+    The enum is closed to the two agents CPIC's DPYD guideline covers.
+    ``asl.interpret`` refuses a drug for which the engine returns no action
+    rather than printing a blank one.
+    """
+
+    CAPECITABINE = "capecitabine"
+    FLUOROURACIL = "fluorouracil"
 
 
 @dataclass(frozen=True)
@@ -116,6 +134,7 @@ class AssayResult:
     calls: tuple[VariantCall, ...]
     regimen: Regimen = Regimen.UNKNOWN
     population: str | None = None  # CPIC population key, e.g. "Central/South Asian"
+    drug: Drug = Drug.CAPECITABINE
 
     def __post_init__(self) -> None:
         # A repeated locus means two contradictory or redundant observations of
@@ -189,10 +208,22 @@ class Flag:
 
 @dataclass(frozen=True)
 class ResidualRisk:
-    """What a panel-negative result does *not* exclude.
+    """What a result does *not* exclude.
 
-    ``rate`` is ``None`` when the regimen is unknown. That is a refusal, not a
-    missing value, and ``report`` renders it as one.
+    ``quoted_rate`` is ``None`` in two distinct cases, and both are refusals
+    rather than missing values:
+
+    * the regimen was not supplied, so no setting-matched rate applies;
+    * **a variant was found**, so the wild-type rate does not describe this
+      patient at all. Henricks 2018 and Lunenburg 2018 both report the grade >=3
+      rate among patients *without* an actionable variant. Printing it to a
+      carrier attributes a comparison group's risk to someone who is not in it,
+      and for a Poor Metabolizer it understates the risk in the reassuring
+      direction — the exact failure this package exists to prevent, applied to
+      the patient with the most to lose.
+
+    ``applies_to_this_patient`` records which case holds, so ``report`` can say
+    why a rate is absent instead of leaving a reader to infer it.
     """
 
     quoted_rate: str | None
@@ -202,6 +233,7 @@ class ResidualRisk:
     cpic_caveat: str
     cpic_citation: str
     refusal_reason: str | None = None
+    applies_to_this_patient: bool = True
 
 
 @dataclass(frozen=True)
@@ -225,7 +257,7 @@ class Interpretation:
     allele_counts: tuple[tuple[str, int], ...] = ()  # (allele, copies) from engine
     engine_version: str = ""
     generated_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(UTC)
     )
 
     @property

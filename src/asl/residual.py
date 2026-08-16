@@ -12,13 +12,18 @@ than "drives".
 The numbers, and why each is used where it is:
 
   Wild-type grade >=3 toxicity rate — the number that actually belongs in a
-  patient report, because it answers "what is still true of me now that my test
-  is negative?":
+  panel-negative patient's report, because it answers "what is still true of me
+  now that my test is negative?":
       systemic chemotherapy        231/1018 = 22.7%  Henricks 2018, PMID 30348537
       incl. chemoradiation         105/771  = 13.6%  Lunenburg 2018, PMID 30361102
   These are different populations at different fluoropyrimidine doses. Quoting
   one where the other applies misleads in both directions, so an unknown regimen
   produces a refusal rather than a default.
+
+  Both are rates among patients **without** an actionable DPYD variant, so
+  neither describes a carrier. A found decreased/no-function allele therefore
+  also produces a refusal: attributing a comparison group's rate to a Poor
+  Metabolizer understates their risk in the reassuring direction.
 
   Panel clinical sensitivity for grade >=3 toxicity: 3.5%-21.6% across 9 studies,
   Ontario HTA 2021, PMID 34484488. The HTA computed no pooled estimate, so the
@@ -32,6 +37,7 @@ The numbers, and why each is used where it is:
 
 from __future__ import annotations
 
+from . import evidence
 from .models import AssayResult, Regimen, ResidualRisk
 
 # Verbatim from the CPIC DPYD guideline (Amstutz et al., Clin Pharmacol Ther
@@ -56,13 +62,17 @@ PANEL_SENSITIVITY = (
 _WILDTYPE_RATES: dict[Regimen, tuple[str, str]] = {
     Regimen.SYSTEMIC: (
         "22.7% (231/1018)",
-        "Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, "
-        "systemic fluoropyrimidine chemotherapy",
+        (
+            "Henricks et al. 2018, Lancet Oncol, PMID 30348537 — prospective, "
+            "systemic fluoropyrimidine chemotherapy"
+        ),
     ),
     Regimen.CHEMORADIATION: (
         "13.6% (105/771)",
-        "Lunenburg et al. 2018, Eur J Cancer, PMID 30361102 — cohort including "
-        "chemoradiation at lower fluoropyrimidine doses",
+        (
+            "Lunenburg et al. 2018, Eur J Cancer, PMID 30361102 — cohort "
+            "including chemoradiation at lower fluoropyrimidine doses"
+        ),
     ),
 }
 
@@ -74,6 +84,51 @@ _REFUSAL = (
     "would mislead. Supply the regimen to obtain a rate."
 )
 
+_CARRIER_REFUSAL = (
+    "No wild-type toxicity rate is quoted because a variant allele was found in "
+    "this patient. The published grade >=3 rates are rates among patients "
+    "WITHOUT an actionable DPYD variant (Henricks 2018, PMID 30348537; "
+    "Lunenburg 2018, PMID 30361102). This patient is not in that group, so no "
+    "figure from it is shown here — for a decreased- or no-function carrier it "
+    "would understate the risk, and a number on the page is read even when the "
+    "sentence around it says not to. What applies here is the CPIC "
+    "recommendation shown above, together with the caveat below: the panel "
+    "having found something does not mean it found everything."
+)
+
+# Loci whose variant alleles CPIC classifies as normal function, and which are
+# therefore compatible with the wild-type comparison group. Read from the pinned
+# CPIC evidence table rather than listed here, so the set cannot drift from it.
+_NORMAL_FUNCTION = "normal function"
+
+
+def _found_non_normal(assay: AssayResult) -> tuple[str, ...]:
+    """Labels of found alleles CPIC does not call normal function.
+
+    A found allele that CPIC calls *normal function* does not remove a patient
+    from the wild-type comparison group — Henricks and Lunenburg both defined
+    that group by the absence of an *actionable* (decreased/no function) variant,
+    not by the absence of any variant at all. So a `*9A` carrier still belongs to
+    the group the rate describes, and a `*2A` carrier does not.
+
+    Falls back to treating an uncitable allele as non-normal, because the safe
+    direction when the function call cannot be read is to withhold the rate.
+    """
+    out: list[str] = []
+    for call in assay.found:
+        label = call.allele_label
+        if not label:
+            out.append(call.rsid)
+            continue
+        try:
+            fn = evidence.record_for(assay.gene, label).clinical_function
+        except evidence.EvidenceError:
+            out.append(label)
+            continue
+        if (fn or "").strip().lower() != _NORMAL_FUNCTION:
+            out.append(label)
+    return tuple(out)
+
 
 def compute(assay: AssayResult) -> ResidualRisk:
     """Build the residual-risk record for an assay result.
@@ -81,7 +136,28 @@ def compute(assay: AssayResult) -> ResidualRisk:
     Returns a ``ResidualRisk`` in every case. There is no input for which this
     function reports the absence of risk — a negative panel yields a residual
     risk statement, and so does a positive one.
+
+    A rate is quoted only when both conditions hold: the regimen is known, and
+    the patient belongs to the group the rate was measured in.
     """
+    non_normal = _found_non_normal(assay)
+    if non_normal:
+        return ResidualRisk(
+            quoted_rate=None,
+            rate_source=None,
+            regimen=assay.regimen,
+            panel_sensitivity=PANEL_SENSITIVITY,
+            cpic_caveat=f"{CPIC_CAVEAT}; and {CPIC_CAVEAT_2}",
+            cpic_citation=CPIC_CITATION,
+            refusal_reason=(
+                _CARRIER_REFUSAL
+                + " Found: "
+                + ", ".join(non_normal)
+                + "."
+            ),
+            applies_to_this_patient=False,
+        )
+
     rate, source = _WILDTYPE_RATES.get(assay.regimen, (None, None))
 
     return ResidualRisk(

@@ -20,17 +20,17 @@ PANEL = ("rs3918290", "rs55886062", "rs67376798", "rs56038477")
 
 
 def _entry(**overrides) -> LedgerEntry:
-    kwargs = dict(
-        anonymised_id="MCC-0001",
-        cancer_type="colorectal",
-        regimen="CAPOX adjuvant",
-        drug="capecitabine",
-        assay_method="4-variant PCR panel",
-        rsids_tested=PANEL,
-        genotypes={r: "0/0" for r in PANEL},
-        cpic_phenotype_at_dosing="Normal Metabolizer",
-        engine_version="0.7.3",
-    )
+    kwargs = {
+        "anonymised_id": "MCC-0001",
+        "cancer_type": "colorectal",
+        "regimen": "CAPOX adjuvant",
+        "drug": "capecitabine",
+        "assay_method": "4-variant PCR panel",
+        "rsids_tested": PANEL,
+        "genotypes": {r: "0/0" for r in PANEL},
+        "cpic_phenotype_at_dosing": "Normal Metabolizer",
+        "engine_version": "0.7.3",
+    }
     kwargs.update(overrides)
     return LedgerEntry(**kwargs)  # type: ignore[arg-type]
 
@@ -161,3 +161,87 @@ def test_entry_serialises_to_valid_json() -> None:
         cycles_received=6,
     ).as_dict()
     assert json.loads(json.dumps(payload))["max_toxicity_grade"] == 2
+
+
+# ---------------------------------------------------------------------------
+# The PHI scan reaches inside containers, and unreadable genotypes are a third
+# state rather than a negative. Both defects were found by supplying the kind of
+# row a site actually produces rather than the tidy row the tests above use.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "leak",
+    [
+        "mucositis, patient called on 9876543210",
+        "grade 3 diarrhoea from 1978-04-12",
+        "queried by onco@hospital.example",
+        "referred under 123456789012",
+    ],
+)
+def test_phi_inside_a_toxicity_term_is_refused(leak: str) -> None:
+    """A free-text field nested in a tuple was never pattern-checked.
+
+    ``as_dict`` renders ``toxicity`` as a list of dicts, and the original scan
+    only pattern-checked top-level strings — so every value inside it passed
+    untouched. The realistic leak is prose: a site types the phone number of the
+    patient who rang about their mucositis into the event description.
+    """
+    with pytest.raises(LedgerRefused, match="toxicity"):
+        _entry(toxicity=(ToxicityEvent(leak, 3),))
+
+
+def test_phi_inside_dose_modifications_is_refused() -> None:
+    """Same defect, in the other free-text container."""
+    with pytest.raises(LedgerRefused, match="dose_modifications"):
+        _entry(dose_modifications=("reduced 25% on 1978-04-12 per ward round",))
+
+
+def test_phi_inside_genotypes_mapping_is_refused() -> None:
+    """And in a nested mapping, which recursion has to reach too."""
+    with pytest.raises(LedgerRefused, match="genotypes"):
+        _entry(genotypes={r: "0/0 read by 9876543210" for r in PANEL})
+
+
+def test_phased_wildtype_is_read_as_negative_not_positive() -> None:
+    """``0|0`` is legal VCF phased wild-type.
+
+    The original check treated any token outside a four-item literal set as a
+    variant call, so a phased wild-type genotype counted as panel-POSITIVE. That
+    is the safe direction to be wrong for a single patient and the wrong
+    direction for the cohort table: it moves patients out of the panel-negative
+    cell the retrospective exists to measure.
+    """
+    entries = [
+        _entry(
+            genotypes={r: "0|0" for r in PANEL},
+            toxicity=(ToxicityEvent("diarrhoea", 4),),
+        ).as_dict()
+    ]
+    cells = quadrant(entries, PANEL)
+    assert cells["negative_toxic"] == 1
+    assert cells["positive_toxic"] == 0
+
+
+def test_an_unreadable_genotype_is_excluded_not_counted_negative() -> None:
+    """A blank or unrecognised token is neither a positive nor a negative.
+
+    An empty string previously counted as panel-POSITIVE via the same literal
+    set. Either reading is an assertion the data does not support, so the row is
+    excluded and the exclusion is reported.
+    """
+    entries = [
+        _entry(
+            anonymised_id="U-1",
+            genotypes={**{r: "0/0" for r in PANEL}, "rs3918290": ""},
+            toxicity=(ToxicityEvent("diarrhoea", 4),),
+        ).as_dict(),
+        _entry(
+            anonymised_id="U-2",
+            genotypes={**{r: "0/0" for r in PANEL}, "rs3918290": "unknown"},
+        ).as_dict(),
+    ]
+    cells = quadrant(entries, PANEL)
+    assert cells["excluded_unreadable_genotype"] == 2
+    assert cells["negative_toxic"] == 0
+    assert cells["positive_toxic"] == 0

@@ -23,7 +23,7 @@ from pathlib import Path
 
 from . import render
 from .interpret import CPIC_ACTIONABLE, CPIC_ALLELE, InterpretationRefused
-from .models import AssayResult, Regimen, TestStatus, VariantCall, Zygosity
+from .models import AssayResult, Drug, Regimen, TestStatus, VariantCall, Zygosity
 from .pipeline import build
 
 # Panel presets. A panel is a *list of loci*, and choosing one is choosing what
@@ -56,6 +56,7 @@ def _assay(
     genotypes: dict[str, Zygosity | None],
     regimen: Regimen,
     population: str | None,
+    drug: Drug = Drug.CAPECITABINE,
 ) -> AssayResult:
     """Build an AssayResult from a panel preset plus observed genotypes.
 
@@ -134,6 +135,7 @@ def _assay(
         calls=tuple(calls),
         regimen=regimen,
         population=population,
+        drug=drug,
     )
 
 
@@ -157,10 +159,11 @@ def cmd_panels(_args: argparse.Namespace) -> int:
 def cmd_demo(args: argparse.Namespace) -> int:
     """The walkthrough patient: panel-negative, then the same patient sequenced."""
     pop = "Central/South Asian"
+    drug = Drug(args.drug)
     if args.panel == "cpic4":
         print("PATIENT: 52F, Kerala, stage III colon adenocarcinoma, adjuvant CAPOX.")
         print("LAB: 4-variant DPYD PCR panel. All four negative.\n")
-        assay = _assay("cpic4", _all_negative("cpic4"), Regimen.SYSTEMIC, pop)
+        assay = _assay("cpic4", _all_negative("cpic4"), Regimen.SYSTEMIC, pop, drug)
     else:
         print("PATIENT: same patient, with research sequencing added.")
         print("FOUND: *9A heterozygous, *6 heterozygous.\n")
@@ -170,6 +173,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
             | {"rs1801265": Zygosity.HET, "rs1801160": Zygosity.HET},
             Regimen.SYSTEMIC,
             pop,
+            drug,
         )
     print(render(build(assay)))
     return 0
@@ -219,6 +223,7 @@ def cmd_interpret(args: argparse.Namespace) -> int:
                 _row_genotypes(row),
                 Regimen(row.get("regimen", "unknown").strip().lower() or "unknown"),
                 row.get("population") or args.population,
+                Drug((row.get("drug") or args.drug).strip().lower()),
             )
             print(render(build(assay)))
         except (InterpretationRefused, ValueError) as exc:
@@ -298,6 +303,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("demo", help="run the walkthrough patient")
     p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
+    p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
     p.set_defaults(func=cmd_demo)
 
     p = sub.add_parser("panels", help="list panel presets")
@@ -307,6 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--csv", required=True)
     p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
     p.add_argument("--population", default="Central/South Asian")
+    p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
     p.set_defaults(func=cmd_interpret)
 
     p = sub.add_parser("quadrant", help="four-quadrant table for a cohort CSV")

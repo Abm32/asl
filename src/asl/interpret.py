@@ -24,7 +24,7 @@ from anukriti_pgx_core.calling import DPYDCaller
 from anukriti_pgx_core.phenotype.clinical_action import action_for
 from anukriti_pgx_core.types import VCFVariant
 
-from .models import AssayResult, TestStatus, Zygosity
+from .models import AssayResult, Zygosity
 
 # Plus-strand genomic REF/ALT per rsID, from CPIC
 # sequence_location.chromosomelocation (g.<pos><REF>><ALT>, GRCh37).
@@ -119,7 +119,19 @@ def call_engine(assay: AssayResult) -> tuple[str, str, str, bool, int, dict[str,
         if hasattr(result.phenotype, "phenotype")
         else str(result.phenotype)
     )
-    action = action_for("DPYD", phenotype, "capecitabine")
+    action = action_for("DPYD", phenotype, assay.drug.value)
+    if not action or action == "INDETERMINATE":
+        # A blank action reaching a report would render as an empty "CPIC action"
+        # line, which reads as "nothing to do" rather than "we could not
+        # determine what CPIC advises". The engine returns '' for an unknown
+        # phenotype/drug pair by design (it never raises), so the check belongs
+        # here.
+        raise InterpretationRefused(
+            f"the engine returned no CPIC clinical action for phenotype "
+            f"{phenotype!r} with {assay.drug.value}. asl will not print a blank "
+            f"or INDETERMINATE action, because an empty recommendation line "
+            f"reads as 'nothing to do'. Resolve the phenotype or the drug pair."
+        )
 
     overspecified = bool(getattr(result, "overspecified", False))
     copies = int(getattr(result, "copies_detected", assay.total_variant_copies))

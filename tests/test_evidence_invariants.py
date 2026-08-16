@@ -12,14 +12,18 @@ survived four releases as an undeclared deviation from CPIC:
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
 from asl import AssayResult, Regimen, TestStatus, VariantCall, Zygosity, build
-from asl.evidence import EvidenceError, _DATA_DIR, record_for, uninformative_in
+from asl.evidence import (
+    _DATA_DIR,
+    EvidenceError,
+    classify_basis,
+    record_for,
+    uninformative_in,
+)
 from asl.interpret import CPIC_ACTIONABLE, CPIC_ALLELE
-from asl.evidence import classify_basis
 
 GENES = ("DPYD", "NUDT15", "TPMT")
 

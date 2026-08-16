@@ -78,7 +78,7 @@ def haplotype_flag(gene: str, assay: AssayResult) -> Flag | None:
     overstate it.
     """
     found_labels = {c.allele_label for c in assay.found}
-    for _key, spec in evidence.haplotype_flags(gene).items():
+    for spec in evidence.haplotype_flags(gene).values():
         required = set(spec.get("alleles_required") or [])
         if not required or not required.issubset(found_labels):
             continue
