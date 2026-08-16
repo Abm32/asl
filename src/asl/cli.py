@@ -53,24 +53,62 @@ _ZYG = {
 
 def _assay(
     panel: str,
-    genotypes: dict[str, Zygosity],
+    genotypes: dict[str, Zygosity | None],
     regimen: Regimen,
     population: str | None,
 ) -> AssayResult:
     """Build an AssayResult from a panel preset plus observed genotypes.
 
-    Every locus in the panel becomes a TESTED call; every locus outside it
-    becomes NOT_TESTED. That mapping is the whole point: it is what stops an
-    untested variant being reported as absent.
+    ``genotypes`` must contain an entry for **every** locus the panel covers.
+    ``None`` means the assay covered the locus but returned no call, which
+    becomes ``NOT_TESTED`` — not a negative. Every locus outside the panel
+    becomes ``NOT_TESTED`` too. That mapping is the whole point: it is what stops
+    an unread variant being reported as absent.
+
+    There is deliberately no default. An earlier version treated an absent key as
+    ``hom_ref``, which made "the assay returned no call" and "the assay returned
+    a negative" the same value — so a blank spreadsheet cell was reported as
+    "tested & negative". That is the precise conflation this package exists to
+    prevent, and a default is what allowed it.
+
+    Refuses when a genotype is supplied for a locus the chosen panel does not
+    cover. That combination is contradictory — the spreadsheet says the locus was
+    read, the panel says it was never assayed — and resolving it either way loses
+    information: marking the locus NOT_TESTED discards an observed variant, and
+    marking it TESTED silently widens the panel the report attributes its
+    conclusions to.
     """
     label, loci = PANELS[panel]
+    off_panel = sorted(set(genotypes) - set(loci))
+    if off_panel:
+        raise InterpretationRefused(
+            "genotype supplied for "
+            + ", ".join(f"{r} ({CPIC_ALLELE[r]})" for r in off_panel)
+            + f", which panel '{panel}' does not cover. asl will not drop an "
+            "observed genotype, and it will not silently widen the panel its "
+            "conclusions are attributed to. Choose a panel that covers these "
+            "loci (try `asl panels`) or remove the columns."
+        )
+    unstated = sorted(set(loci) - set(genotypes))
+    if unstated:
+        raise InterpretationRefused(
+            "no entry for "
+            + ", ".join(f"{r} ({CPIC_ALLELE[r]})" for r in unstated)
+            + f", which panel '{panel}' does cover. State a zygosity, or None "
+            "if the assay returned no call at that locus. asl has no default: "
+            "silently assuming a negative is how an unread locus becomes a "
+            "clean result."
+        )
+
+    no_call = [r for r in loci if genotypes[r] is None]
     calls: list[VariantCall] = []
     for rsid in loci:
+        zyg = genotypes[rsid]
         calls.append(
             VariantCall(
                 rsid=rsid,
-                status=TestStatus.TESTED,
-                zygosity=genotypes.get(rsid, Zygosity.HOM_REF),
+                status=TestStatus.NOT_TESTED if zyg is None else TestStatus.TESTED,
+                zygosity=zyg,
                 allele_label=CPIC_ALLELE[rsid],
             )
         )
@@ -83,6 +121,13 @@ def _assay(
                     allele_label=CPIC_ALLELE[rsid],
                 )
             )
+    if no_call:
+        # The panel name is what the report attributes its conclusions to, so it
+        # must not claim coverage the data did not deliver.
+        label = (
+            f"{label} ({len(loci) - len(no_call)} of {len(loci)} loci returned "
+            f"a call)"
+        )
     return AssayResult(
         gene="DPYD",
         panel_name=label,
@@ -90,6 +135,15 @@ def _assay(
         regimen=regimen,
         population=population,
     )
+
+
+def _all_negative(panel: str) -> dict[str, Zygosity | None]:
+    """Every locus in a panel, explicitly tested and negative.
+
+    Used by the demo and by tests. Written out rather than defaulted, because a
+    default is what let a blank cell become a negative result.
+    """
+    return {rsid: Zygosity.HOM_REF for rsid in PANELS[panel][1]}
 
 
 def cmd_panels(_args: argparse.Namespace) -> int:
@@ -106,13 +160,14 @@ def cmd_demo(args: argparse.Namespace) -> int:
     if args.panel == "cpic4":
         print("PATIENT: 52F, Kerala, stage III colon adenocarcinoma, adjuvant CAPOX.")
         print("LAB: 4-variant DPYD PCR panel. All four negative.\n")
-        assay = _assay("cpic4", {}, Regimen.SYSTEMIC, pop)
+        assay = _assay("cpic4", _all_negative("cpic4"), Regimen.SYSTEMIC, pop)
     else:
         print("PATIENT: same patient, with research sequencing added.")
         print("FOUND: *9A heterozygous, *6 heterozygous.\n")
         assay = _assay(
             "cpic4_plus_sas",
-            {"rs1801265": Zygosity.HET, "rs1801160": Zygosity.HET},
+            _all_negative("cpic4_plus_sas")
+            | {"rs1801265": Zygosity.HET, "rs1801160": Zygosity.HET},
             Regimen.SYSTEMIC,
             pop,
         )
@@ -120,18 +175,32 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
-def _row_genotypes(row: dict[str, str]) -> dict[str, Zygosity]:
-    out: dict[str, Zygosity] = {}
+def _row_genotypes(row: dict[str, str]) -> dict[str, Zygosity | None]:
+    """Read the rsID columns of one CSV row.
+
+    A column that is present but blank maps to ``None`` — the assay covered the
+    locus and returned no call — which ``_assay`` renders as NOT_TESTED. A column
+    that is absent entirely is not in the returned map at all, and ``_assay``
+    refuses if the chosen panel covers it. Blank and absent are different facts
+    and are kept different.
+    """
+    out: dict[str, Zygosity | None] = {}
     for key, value in row.items():
         k = (key or "").strip()
-        if k in CPIC_ALLELE and (value or "").strip():
-            z = _ZYG.get(value.strip().lower())
-            if z is None:
-                raise ValueError(
-                    f"{k}: cannot read genotype {value!r}. Use 0/1/2, "
-                    f"hom_ref/het/hom_var, or wt/het/hom."
-                )
-            out[k] = z
+        if k not in CPIC_ALLELE:
+            continue
+        raw = (value or "").strip()
+        if not raw:
+            out[k] = None
+            continue
+        z = _ZYG.get(raw.lower())
+        if z is None:
+            raise ValueError(
+                f"{k}: cannot read genotype {value!r}. Use 0/1/2, "
+                f"hom_ref/het/hom_var, or wt/het/hom. Leave the cell blank "
+                f"only if the assay returned no call at this locus."
+            )
+        out[k] = z
     return out
 
 
@@ -163,6 +232,10 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     This is the question a site retrospective exists to answer. The cell that
     matters is panel-negative with grade >=3 toxicity: those are the patients a
     guideline-conformant test reassured and who then toxified anyway.
+
+    A patient with any no-call among the panel loci is **excluded**, not counted
+    as negative. Counting them as negative would inflate exactly the cell the
+    analysis turns on, and in the direction that flatters our own thesis.
     """
     path = Path(args.csv)
     rows = list(csv.DictReader(path.open()))
@@ -170,9 +243,14 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
 
     cells = {(True, True): 0, (True, False): 0, (False, True): 0, (False, False): 0}
     missing = 0
+    incomplete = 0
     for row in rows:
         g = _row_genotypes(row)
-        positive = any(g.get(r, Zygosity.HOM_REF) is not Zygosity.HOM_REF for r in loci)
+        unread = [r for r in loci if g.get(r) is None]
+        if unread:
+            incomplete += 1
+            continue
+        positive = any(g[r] is not Zygosity.HOM_REF for r in loci)
         grade = (row.get("max_toxicity_grade") or "").strip()
         if not grade.isdigit():
             missing += 1
@@ -183,6 +261,13 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     print(f"Four-quadrant table — panel: {PANELS[args.panel][0]}")
     print(f"n = {n} patients with a readable toxicity grade"
           + (f" ({missing} skipped, grade not recorded)" if missing else ""))
+    if incomplete:
+        print(
+            f"    {incomplete} excluded: at least one panel locus returned no "
+            f"call. Not counted as negative — an unread locus is not a clean "
+            f"result, and counting it as one would inflate the panel-negative "
+            f"cell this table exists to measure."
+        )
     print()
     print(f"{'':22}{'grade >=3':>12}{'grade <3':>12}")
     print(f"{'panel POSITIVE':<22}{cells[(True, True)]:>12}{cells[(True, False)]:>12}")

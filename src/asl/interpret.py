@@ -85,11 +85,16 @@ class InterpretationRefused(RuntimeError):
     """Raised when the engine's answer cannot be reported as-is."""
 
 
-def call_engine(assay: AssayResult) -> tuple[str, str, str, bool, int]:
+def call_engine(assay: AssayResult) -> tuple[str, str, str, bool, int, dict[str, int]]:
     """Run the deterministic engine.
 
     Returns ``(diplotype, phenotype, clinical_action, overspecified,
-    copies_detected)``.
+    copies_detected, allele_counts)``.
+
+    ``allele_counts`` is the engine's per-allele copy count. It is returned
+    alongside the diplotype so a report can show that the two named alleles
+    account for everything detected, rather than asking the reader to trust it
+    (``pgx-core`` 0.7.3, §8 item 1).
 
     Raises ``InterpretationRefused`` when more variant copies were detected than
     a diploid locus admits, because the engine's diplotype then omits alleles
@@ -118,6 +123,7 @@ def call_engine(assay: AssayResult) -> tuple[str, str, str, bool, int]:
 
     overspecified = bool(getattr(result, "overspecified", False))
     copies = int(getattr(result, "copies_detected", assay.total_variant_copies))
+    counts: dict[str, int] = dict(getattr(result, "allele_counts", {}) or {})
 
     if overspecified:
         detected = ", ".join(sorted(result.alleles_detected))
@@ -129,7 +135,7 @@ def call_engine(assay: AssayResult) -> tuple[str, str, str, bool, int]:
             f"(phasing, sample identity, or assay artifact) before interpreting."
         )
 
-    return result.diplotype, phenotype, action, overspecified, copies
+    return result.diplotype, phenotype, action, overspecified, copies, counts
 
 
 def engine_version() -> str:

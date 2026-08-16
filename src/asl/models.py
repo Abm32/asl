@@ -117,6 +117,27 @@ class AssayResult:
     regimen: Regimen = Regimen.UNKNOWN
     population: str | None = None  # CPIC population key, e.g. "Central/South Asian"
 
+    def __post_init__(self) -> None:
+        # A repeated locus means two contradictory or redundant observations of
+        # the same position. The engine is keyed by rsID, so a duplicate would
+        # silently overwrite its predecessor and the losing genotype would
+        # disappear without appearing anywhere in the report.
+        seen: dict[str, VariantCall] = {}
+        for call in self.calls:
+            prior = seen.get(call.rsid)
+            if prior is not None:
+                raise ValueError(
+                    f"{call.rsid} appears twice in this assay "
+                    f"({prior.status.value}"
+                    + (f"/{prior.zygosity.value}" if prior.zygosity else "")
+                    + f" and {call.status.value}"
+                    + (f"/{call.zygosity.value}" if call.zygosity else "")
+                    + "). A locus has one observation. Resolve the duplicate "
+                    "before interpreting — asl will not choose between two "
+                    "readings of the same position."
+                )
+            seen[call.rsid] = call
+
     @property
     def tested(self) -> tuple[VariantCall, ...]:
         return tuple(c for c in self.calls if c.status is TestStatus.TESTED)
@@ -201,6 +222,7 @@ class Interpretation:
     uninformative_loci: tuple[tuple[str, str], ...] = ()  # (rsid, reason)
     overspecified: bool = False
     copies_detected: int = 0
+    allele_counts: tuple[tuple[str, int], ...] = ()  # (allele, copies) from engine
     engine_version: str = ""
     generated_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)

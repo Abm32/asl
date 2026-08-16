@@ -40,6 +40,20 @@ def render(interp: Interpretation) -> str:
     out.append("")
     out.append("CPIC CALL (unmodified, attributed to CPIC)")
     out.append(f"  Diplotype   : {interp.diplotype}")
+    if interp.allele_counts:
+        # pgx-core 0.7.3 §8 item 1: show every allele the engine detected, with
+        # its copy count, so a reader can confirm the two named alleles account
+        # for everything found rather than taking it on trust. Before 0.7.3 the
+        # engine truncated silently; asl now refuses that case outright, and this
+        # line makes the non-truncated case auditable too.
+        detected = ", ".join(
+            f"{allele}x{n}" for allele, n in interp.allele_counts
+        )
+        out.append(
+            f"  Detected    : {detected}  "
+            f"({interp.copies_detected} variant "
+            f"cop{'y' if interp.copies_detected == 1 else 'ies'} total)"
+        )
     out.append(f"  Phenotype   : {interp.phenotype}")
     out.append(f"  CPIC action : {interp.cpic_recommendation_action}")
     out.append(
@@ -73,7 +87,7 @@ def render(interp: Interpretation) -> str:
     # --- uninformative loci ----------------------------------------------
     if interp.uninformative_loci:
         out.append("")
-        out.append("[ASL-POP-01]  LOCI THAT CANNOT RETURN A POSITIVE HERE")
+        out.append("[ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE")
         for label, reason in interp.uninformative_loci:
             out.append(f"  {label}")
             for line in _wrap(reason, "    "):

@@ -50,6 +50,26 @@ def allele_names(gene: str) -> tuple[str, ...]:
     return tuple(_load_gene(gene)["alleles"].keys())
 
 
+@lru_cache(maxsize=None)
+def population_keys(gene: str) -> frozenset[str]:
+    """Every population key CPIC publishes a frequency under for this gene.
+
+    Used to refuse an unrecognised population string. A typo such as
+    ``"South Asian"`` for ``"Central/South Asian"`` would otherwise pass
+    silently and turn every frequency lookup into ``None``, producing a report
+    that looks population-aware and is not.
+    """
+    keys: set[str] = set()
+    for row in _load_gene(gene)["alleles"].values():
+        keys |= set((row.get("frequency") or {}).keys())
+    if not keys:
+        raise EvidenceError(
+            f"{gene}: pinned evidence table publishes no population "
+            f"frequencies; regenerate it before interpreting by population."
+        )
+    return frozenset(keys)
+
+
 def frequency(gene: str, allele_label: str, population: str | None) -> float | None:
     """CPIC allele frequency in one population, or None if unavailable.
 
@@ -112,20 +132,37 @@ def haplotype_flags(gene: str) -> dict:
 def uninformative_in(
     gene: str, allele_label: str, population: str | None
 ) -> str | None:
-    """Reason this locus is uninformative in this population, or None.
+    """Reason this locus has very low prior yield in this population, or None.
 
-    A variant at frequency 0.0 in the patient's population cannot be found in
-    that patient, so testing it establishes nothing. Saying so is honest and
-    costs nothing; not saying so lets a patient pay for a test that could not
-    have returned a positive.
+    A variant at 0.00000 reference frequency in the patient's population has a
+    very low prior probability of being found, so testing it adds little. Saying
+    so is honest and costs nothing; not saying so lets a patient pay for a test
+    that was nearly certain to be negative.
+
+    **This is deliberately not phrased as "cannot occur."** A 0.00000 CPIC
+    frequency is an *absence of observation in a reference panel*, not a proof of
+    absence in the population. Chan 2024 (PMID 38886557) reported ``*13`` in a
+    Tunisian patient with severe toxicity although its Middle Eastern reference
+    frequency is 0%, and reported ``*2A`` in Chinese, Thai and Japanese patients
+    although its East Asian reference frequency is 0%. Reference panels are small
+    relative to India's population structure, so a zero there is weak evidence.
+    Telling a clinician a variant "cannot" be found would license ignoring a
+    positive call if the assay ever produced one — the same conversion of missing
+    data into certainty that this package exists to prevent, inverted.
     """
     freq = frequency(gene, allele_label, population)
     if freq is None:
         return None
     if freq == 0.0:
         return (
-            f"CPIC allele frequency in {population} is 0.00000 — "
-            f"this locus cannot return a positive result in this population"
+            f"CPIC reports an allele frequency of 0.00000 in {population}, so a "
+            f"positive result here is expected to be very rare and this locus "
+            f"contributes little to this panel. NOTE: a 0.00000 reference "
+            f"frequency is an absence of observation in a reference panel, not "
+            f"proof the variant is absent from the population — this variant has "
+            f"been reported in patients from populations where its reference "
+            f"frequency is 0% (Chan 2024, PMID 38886557). A positive call at "
+            f"this locus must still be acted on."
         )
     return None
 
