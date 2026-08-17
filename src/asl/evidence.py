@@ -139,6 +139,25 @@ def haplotype_flags(gene: str) -> dict:
     return _load_conflicts(gene).get("haplotype_flags", {})
 
 
+def variant_class_limit(gene: str, method: str) -> dict | None:
+    """The limitation record for an assay method, or None if it has no limit.
+
+    Keyed by method rather than by allele because this is a property of the
+    laboratory technique, not of a variant — which is precisely why it cannot be
+    generated from CPIC's allele table. CPIC publishes what each allele does, not
+    what a given method is capable of observing.
+
+    Returns None when the record carries no ``rule_id``, i.e. the method has no
+    undisclosed limitation, so a CNV-aware assay produces no flag.
+    """
+    spec = (
+        _load_conflicts(gene).get("variant_class_limits", {}).get(method)
+    )
+    if not spec or not spec.get("rule_id"):
+        return None
+    return spec
+
+
 def pending_change_for(gene: str, allele_label: str) -> dict | None:
     """A change CPIC has announced but not yet published, if one exists.
 

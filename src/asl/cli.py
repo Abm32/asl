@@ -23,7 +23,15 @@ from pathlib import Path
 
 from . import render
 from .interpret import CPIC_ACTIONABLE, CPIC_ALLELE, InterpretationRefused
-from .models import AssayResult, Drug, Regimen, TestStatus, VariantCall, Zygosity
+from .models import (
+    AssayMethod,
+    AssayResult,
+    Drug,
+    Regimen,
+    TestStatus,
+    VariantCall,
+    Zygosity,
+)
 from .pipeline import build
 
 # Panel presets. A panel is a *list of loci*, and choosing one is choosing what
@@ -65,6 +73,7 @@ def _assay(
     regimen: Regimen,
     population: str | None,
     drug: Drug = Drug.CAPECITABINE,
+    method: AssayMethod = AssayMethod.SNV_ONLY,
 ) -> AssayResult:
     """Build an AssayResult from a panel preset plus observed genotypes.
 
@@ -152,6 +161,7 @@ def _assay(
         regimen=regimen,
         population=population,
         drug=drug,
+        method=method,
     )
 
 

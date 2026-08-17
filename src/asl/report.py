@@ -14,7 +14,7 @@ Two engine artifacts are deliberately suppressed:
 from __future__ import annotations
 
 from .interpret import assayed_variant_name
-from .models import Interpretation, Regimen
+from .models import AssayMethod, Interpretation, Regimen
 from .residual import untested_statement
 
 _W = 76
@@ -87,6 +87,18 @@ def render(interp: Interpretation) -> str:
     out.append(f"  Tested ({len(a.tested)}): {' | '.join(tested)}")
     out.append(f"  Tested & negative : {' | '.join(neg) if neg else '(none)'}")
     out.append(f"  Tested & FOUND    : {' | '.join(pos) if pos else '(none)'}")
+    # "Negative" above is a statement about a base, not about a chromosome. On an
+    # SNV-only method a locus inside a heterozygous deletion also reads negative,
+    # so the qualifier belongs on the line that makes the claim rather than only
+    # in a flag further down that a reader may not reach.
+    if neg and a.method is AssayMethod.SNV_ONLY:
+        out.extend(_wrap(
+            "Negative above means no variant base was detected at that "
+            "position. It does not mean two intact copies were observed: this "
+            "method cannot detect a deletion of the locus, which reads as "
+            "homozygous reference. See P6_DPYD_CNV_NOT_INTERROGATED below.",
+            "  ",
+        ))
     stmt = untested_statement(a)
     if stmt:
         out.append("")
@@ -185,6 +197,10 @@ def render(interp: Interpretation) -> str:
             "finding is established."
         ),
         "It does not treat an untested locus as a negative result.",
+        (
+            "It does not treat a negative result as evidence against variant "
+            "classes the method could not detect."
+        ),
     ):
         out.extend(_wrap(line, "  "))
     out.append(_rule())

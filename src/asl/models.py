@@ -42,6 +42,41 @@ class TestStatus(str, Enum):
     NOT_TESTED = "not_tested"
 
 
+class AssayMethod(str, Enum):
+    """What class of variant the laboratory method could detect at all.
+
+    This is a different axis from ``TestStatus`` and it has to be, because the
+    two answer different questions. ``TestStatus`` records whether the assay
+    looked at a *locus*; this records whether the method was capable of seeing a
+    *class of variant* anywhere in the gene.
+
+    The distinction is not academic. An SNV-only method infers zygosity from the
+    allele ratio at a single base, so on a chromosome carrying a deletion of that
+    base there is nothing to amplify and the surviving allele reads as
+    homozygous reference. **One reference copy and two reference copies are
+    indistinguishable to it.** So ``hom_ref`` at every locus is consistent with
+    both "no variant" and "a multi-exon deletion spanning these loci", and a
+    report that prints only "Tested & negative" has silently chosen the first.
+
+    That is not hypothetical. Delcuratolo et al. 2026 (Front Pharmacol
+    17:1866621) describe a patient wild type on the 4-variant panel *and* on a
+    repeat including c.2194G>A, who developed grade 4 diarrhoea and septic shock
+    after eight days of full-dose capecitabine; NGS and SNP array then found a
+    heterozygous ~500 kb deletion of exons 5-20 — containing four of the five
+    loci the panel had screened. Genomic deletions account for 7% (5/72) of
+    DPD-deficient patients (van Kuilenburg 2009, PMID 19296131).
+
+    ``SNV_ONLY`` is the default deliberately. Every panel ``asl`` currently
+    models is a PCR or targeted-SNV assay, and the default has to be the
+    conservative reading: claiming CNV coverage the method does not have is the
+    failure this enum exists to prevent, so the safe default is to disclose the
+    limit and let a CNV-aware method opt out of the flag.
+    """
+
+    SNV_ONLY = "snv_only"
+    CNV_AWARE = "cnv_aware"
+
+
 class Basis(str, Enum):
     """Assay basis behind an allele-function call, classified from CPIC."""
 
@@ -157,6 +192,7 @@ class AssayResult:
     regimen: Regimen = Regimen.UNKNOWN
     population: str | None = None  # CPIC population key, e.g. "Central/South Asian"
     drug: Drug = Drug.CAPECITABINE
+    method: AssayMethod = AssayMethod.SNV_ONLY
 
     def __post_init__(self) -> None:
         # A repeated locus means two contradictory or redundant observations of

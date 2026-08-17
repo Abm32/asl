@@ -106,6 +106,15 @@ def build(assay: AssayResult) -> Interpretation:
     if hap:
         collected.append(hap)
 
+    # A limit of the METHOD rather than of a locus: an SNV assay cannot see a
+    # copy-number variant anywhere in the gene, including at the loci it read as
+    # negative. Emitted for every assay whose method has an undisclosed class
+    # limit, found or not found -- unlike the flags above it does not depend on
+    # what was detected, because the point is what could not have been.
+    vclass = flags.variant_class_flag(GENE, assay)
+    if vclass:
+        collected.append(vclass)
+
     # CPIC's mandated tag-SNP disclosure. Emitted from the engine's own record of
     # which locus produced the call, never inferred from the assay here: the
     # engine knows what it matched, and duplicating that logic is how the two

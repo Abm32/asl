@@ -189,6 +189,61 @@
       "phase_requirement": "Phase cannot be determined from unphased genotypes. This is ALWAYS emitted as a flag with phase_unknown, never as a call."
     }
   },
+  "variant_class_limits": {
+    "_note": [
+      "What class of variant an assay method can detect at all. This is not a",
+      "per-allele property, so it cannot be generated from CPIC's allele table:",
+      "CPIC publishes what each allele does, not what a given laboratory method",
+      "is capable of seeing.",
+      "",
+      "The distinction matters because an SNV-only method reading hom_ref at a",
+      "deleted locus is reading the surviving chromosome. One reference copy and",
+      "two reference copies are indistinguishable to it, so 'wild type' at that",
+      "locus is consistent with both no variant and a whole-exon deletion."
+    ],
+    "snv_only": {
+      "rule_id": "P6_DPYD_CNV_NOT_INTERROGATED",
+      "detects": "single-nucleotide variants and small indels at the assayed positions",
+      "cannot_detect": "copy-number and structural variants (whole-exon or multi-exon deletions, duplications, inversions)",
+      "why": "A genotyping method that reads one base at a time infers zygosity from allele ratio at that base. On a chromosome carrying a deletion of the locus there is nothing to amplify, so the surviving allele reads as homozygous reference. Absence of the deletion is therefore not established by a negative SNV result.",
+      "frequency_evidence": [
+        {
+          "citation": "van Kuilenburg et al. 2009, Hum Genet 125(5-6):581-590",
+          "pmid": "19296131",
+          "cohort_n": 72,
+          "finding": "Genomic deletions affecting DPYD were found in 7% (5/72) of DPD-deficient patients. The authors conclude that screening DPD-deficient patients for genomic deletions should be considered.",
+          "caveats": "Denominator is patients already known to be DPD deficient, not an unselected population. This is the proportion of deficiency attributable to deletions, NOT a population carrier frequency, and it must not be read as one."
+        },
+        {
+          "citation": "Delcuratolo et al. 2026, Front Pharmacol 17:1866621",
+          "pmid": "",
+          "cohort_n": 1,
+          "finding": "A patient wild type on the 4-variant panel plus c.2194G>A developed grade 4 diarrhoea and septic shock after 8 days of full-dose capecitabine, chemotherapy abandoned. NGS and SNP array found a heterozygous ~500 kb deletion of exons 5-20, containing 4 of the 5 loci the panel had screened. DPD activity was 49% of control with raised plasma uracil and a reduced DHU/U ratio.",
+          "caveats": "Single case report. Establishes the failure mode and its mechanism, not its frequency. The authors note the deletion would have indicated a 50% dose reduction had it been known before treatment."
+        },
+        {
+          "citation": "Saarenheimo et al. 2021, Cancer Chemother Pharmacol 87(5):657-663",
+          "pmid": "",
+          "cohort_n": null,
+          "finding": "Pre-emptive DPYD screening found a high prevalence of a novel exon 4 deletion in the Finnish population.",
+          "caveats": "Shows that deletion prevalence is population-specific. No equivalent survey has been published for any Indian population, so the local rate is unknown rather than low."
+        }
+      ],
+      "population_note": "No study has surveyed DPYD structural variants in any Indian population. The rate here is unmeasured, which is not the same as low. Reporting it as either would be an assertion the data does not support.",
+      "what_asl_does": "States that the method could not interrogate this variant class, and that a negative result therefore does not exclude it. Does not estimate a residual probability, does not alter the phenotype, and does not recommend further testing -- what to do about an unexcluded variant class is a clinical decision.",
+      "detection_methods": "Multi-exon deletions require a copy-number-aware method: MLPA, read-depth CNV analysis on NGS, or SNP array. The Delcuratolo case was found by read-depth NGS and confirmed by SNP array."
+    },
+    "cnv_aware": {
+      "rule_id": "",
+      "detects": "single-nucleotide variants, small indels, and copy-number variants at the assayed positions",
+      "cannot_detect": "",
+      "why": "",
+      "frequency_evidence": [],
+      "population_note": "",
+      "what_asl_does": "Emits no variant-class limitation flag, because the method interrogated this class.",
+      "detection_methods": ""
+    }
+  },
   "pending_guideline_changes": {
     "c.1129-5923C>G, c.1236G>A (HapB3)": {
       "rule_id": "P4_DPYD_HAPB3_CPIC_UPDATE_PENDING",

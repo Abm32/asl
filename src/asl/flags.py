@@ -68,6 +68,71 @@ def conflict_flags(gene: str, assay: AssayResult) -> tuple[Flag, ...]:
     return tuple(out)
 
 
+def variant_class_flag(gene: str, assay: AssayResult) -> Flag | None:
+    """Disclose a variant class the assay method could not interrogate at all.
+
+    Every other refusal in this package is keyed to a *locus*: it says the assay
+    did not look here. This one is keyed to the *method*, and says the assay could
+    not have seen this kind of variant anywhere in the gene, including at the loci
+    it did read.
+
+    That gap is why the flag is needed rather than covered by ``NOT_TESTED``. A
+    locus inside a heterozygous deletion is not untested — it was assayed, it
+    returned a call, and the call was ``hom_ref``, because an SNV method reads the
+    surviving chromosome and cannot distinguish one reference copy from two. So
+    the locus appears under "Tested & negative", which is true of the base and
+    false of the chromosome, and no ``NOT_TESTED`` entry is generated to correct
+    it. Without this flag the single most complete-looking report the package can
+    produce — every panel locus tested, every one negative — is the one whose
+    limitation is least visible.
+
+    Deliberately does **not** attach a residual probability. The 7% figure
+    (van Kuilenburg 2009, PMID 19296131) is the share of *already DPD-deficient*
+    patients whose deficiency is due to a deletion; it is not a population carrier
+    frequency, and printing it as a risk for this patient would be exactly the
+    denominator substitution the residual module refuses elsewhere. It is quoted
+    with its denominator stated, or not at all.
+
+    Also does not recommend further testing. What to do about an unexcluded
+    variant class is a clinical decision, and recommending a test would move this
+    from informing clinical management to driving it.
+    """
+    spec = evidence.variant_class_limit(gene, assay.method.value)
+    if spec is None:
+        return None
+
+    detail = (
+        f"    Method: {assay.method.value} — detects "
+        f"{spec.get('detects','')}.\n"
+        f"    Cannot detect: {spec.get('cannot_detect','')}.\n"
+        f"    Why: {spec.get('why','')}\n"
+        f"    How often this matters:\n"
+        f"{_fmt_studies(spec.get('frequency_evidence') or [])}\n"
+        f"    Population: {spec.get('population_note','')}\n"
+        f"    Detection: {spec.get('detection_methods','')}\n"
+        f"    What asl does: {spec.get('what_asl_does','')}"
+    )
+    return Flag(
+        rule_id=spec["rule_id"],
+        summary=(
+            "This method reads single bases, so it could not interrogate "
+            "copy-number or structural variants anywhere in the gene — including "
+            "at the loci it reported as negative. A locus inside a heterozygous "
+            "deletion reads as homozygous reference, because only the surviving "
+            "chromosome is amplified. A negative result here does not exclude "
+            "this class of variant. No probability is attached, and no further "
+            "testing is recommended: this states a limit of the method, not a "
+            "finding about this patient."
+        ),
+        detail=detail,
+        citations=tuple(
+            e["pmid"]
+            for e in (spec.get("frequency_evidence") or [])
+            if e.get("pmid")
+        ),
+    )
+
+
 def pending_change_flags(gene: str, assay: AssayResult) -> tuple[Flag, ...]:
     """Flag found alleles whose CPIC value is announced to change but unpublished.
 

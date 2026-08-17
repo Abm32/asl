@@ -865,8 +865,112 @@ def test_no_pending_change_flag_for_an_allele_without_one() -> None:
 
 
 def test_a_panel_negative_patient_gets_no_pending_change_flag() -> None:
+    """No *pending-change* flag, which is what this test is about.
+
+    This deliberately no longer asserts ``flags == ()``. It used to, and that was
+    the wrong invariant: it encoded "a negative panel produces a clean report",
+    which is the assumption P6_DPYD_CNV_NOT_INTERROGATED exists to break. A
+    panel-negative SNV assay *must* carry the variant-class disclosure, because
+    that is the case where the method's limit is least visible and most
+    consequential. Asserting an empty flag tuple here would have made the fix
+    look like a regression.
+    """
     interp = build(_assay({}))
-    assert interp.flags == ()
+    ids = {f.rule_id for f in interp.flags}
+    assert "P4_DPYD_HAPB3_CPIC_UPDATE_PENDING" not in ids
+    assert not any(f.rule_id.startswith("P2_") for f in interp.flags)
+
+
+# ---------------------------------------------------------------------------
+# P6_DPYD_CNV_NOT_INTERROGATED — the variant class no locus-level refusal covers.
+#
+# Found by running the Delcuratolo 2026 patient (Front Pharmacol 17:1866621)
+# through the pipeline: wild type on all four CPIC loci plus c.2194G>A, who then
+# suffered grade 4 toxicity and septic shock from a heterozygous ~500 kb deletion
+# of exons 5-20 that contained four of the five loci screened. asl reported
+# "Tested & negative" for all of them, which is true of the bases and false of
+# the chromosome — an SNV method reads only the surviving copy.
+#
+# This is not a NOT_TESTED case, which is why no existing refusal caught it: the
+# loci WERE tested and DID return calls.
+# ---------------------------------------------------------------------------
+
+
+def test_an_snv_only_negative_panel_discloses_the_cnv_limit() -> None:
+    """The all-negative report is the one that most needs the disclosure."""
+    interp = build(_assay({}))
+    ids = {f.rule_id for f in interp.flags}
+    assert "P6_DPYD_CNV_NOT_INTERROGATED" in ids
+
+
+def test_the_disclosure_survives_into_the_rendered_report() -> None:
+    """A flag a clinician never sees is not a disclosure."""
+    from asl.report import render
+
+    text = render(build(_assay({})))
+    assert "P6_DPYD_CNV_NOT_INTERROGATED" in text
+    # The qualifier must sit on the line making the claim, not only in the flag.
+    assert "does not mean two intact copies were observed" in text
+
+
+def test_the_disclosure_is_emitted_for_a_carrier_too() -> None:
+    """Finding one variant does not exclude a deletion on the other chromosome.
+
+    The other flags are keyed to what was found. This one is keyed to what the
+    method could not have seen, so it does not depend on the result.
+    """
+    interp = build(_assay({"rs3918290": Zygosity.HET}))
+    ids = {f.rule_id for f in interp.flags}
+    assert "P6_DPYD_CNV_NOT_INTERROGATED" in ids
+
+
+def test_a_cnv_aware_method_gets_no_disclosure() -> None:
+    """The flag states a real limit, so it must disappear when the limit does."""
+    from dataclasses import replace
+
+    from asl.models import AssayMethod
+
+    base = _assay({})
+    interp = build(replace(base, method=AssayMethod.CNV_AWARE))
+    ids = {f.rule_id for f in interp.flags}
+    assert "P6_DPYD_CNV_NOT_INTERROGATED" not in ids
+
+    from asl.report import render
+
+    assert "two intact copies were observed" not in render(interp)
+
+
+def test_the_disclosure_attaches_no_probability_to_this_patient() -> None:
+    """7% is the share of DPD-deficient patients, not a carrier frequency.
+
+    Quoting it as this patient's risk would be the same denominator substitution
+    ``residual`` refuses for the wild-type toxicity rate. It may appear only with
+    its denominator stated.
+    """
+    from asl.report import render
+
+    text = render(build(_assay({})))
+    assert "7% (5/72) of DPD-deficient patients" in text
+    assert "Denominator is patients already known to be DPD deficient" in text
+
+
+def test_the_disclosure_recommends_no_test_and_changes_no_phenotype() -> None:
+    """Recommending a test would move asl from informing to driving care."""
+    interp = build(_assay({}))
+    assert interp.phenotype == "Normal Metabolizer"
+    assert interp.cpic_recommendation_action == "STANDARD"
+    flag = next(
+        f for f in interp.flags if f.rule_id == "P6_DPYD_CNV_NOT_INTERROGATED"
+    )
+    assert "no further testing is recommended" in flag.summary
+
+
+def test_the_indian_deletion_rate_is_stated_as_unmeasured() -> None:
+    """Unknown is not low, and the report must not let it read as low."""
+    from asl.report import render
+
+    text = render(build(_assay({})))
+    assert "unmeasured, which is not the same as low" in text
 
 
 # ---------------------------------------------------------------------------

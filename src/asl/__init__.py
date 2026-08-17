@@ -12,6 +12,7 @@ returns an all-clear.
 from __future__ import annotations
 
 from .models import (
+    AssayMethod,
     AssayResult,
     Basis,
     Drug,
@@ -30,6 +31,7 @@ from .report import render
 __version__ = "0.1.0"
 
 __all__ = [
+    "AssayMethod",
     "AssayResult",
     "Basis",
     "Drug",
