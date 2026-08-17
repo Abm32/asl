@@ -20,6 +20,16 @@ The numbers, and why each is used where it is:
   one where the other applies misleads in both directions, so an unknown regimen
   produces a refusal rather than a default.
 
+  Induction TPF gets NO rate, and that is the point. Both cohorts above are
+  Dutch, largely colorectal, and predominantly capecitabine or lower-dose
+  infusional 5-FU. Induction docetaxel/cisplatin/5-FU for head and neck cancer —
+  5-FU 750 mg/m2/day continuous infusion D1-D5 plus two other cytotoxics, and
+  one of the largest fluoropyrimidine exposures in India — is a different
+  exposure with roughly threefold the observed toxicity (Patil 2016, J Community
+  Support Oncol 14(10):412-419). No wild-type-stratified rate has been published
+  for it, so this module refuses to quote one instead of reaching for the
+  nearest available number. A missing comparator is stated as missing.
+
   Both are rates among patients **without** an actionable DPYD variant, so
   neither describes a carrier. A found decreased/no-function allele therefore
   also produces a refusal: attributing a comparison group's rate to a Poor
@@ -82,6 +92,30 @@ _REFUSAL = (
     "variant differs by setting (22.7% on systemic chemotherapy vs 13.6% in a "
     "cohort including chemoradiation), and quoting one where the other applies "
     "would mislead. Supply the regimen to obtain a rate."
+)
+
+# Induction TPF has no published wild-type-stratified grade >=3 rate, so it gets
+# a refusal that states what IS observed on the regimen without dressing it up as
+# a genotype-stratified comparator. The observed figures are whole-cohort rates,
+# not rates among panel-negative patients, and the text says so — quoting them as
+# if they were the wild-type comparator would repeat the error in the other
+# direction.
+_TPF_REFUSAL = (
+    "No wild-type toxicity rate is quoted because none has been published for "
+    "this regimen. Induction docetaxel/cisplatin/5-FU delivers 5-FU at "
+    "750 mg/m2/day by continuous infusion on days 1-5 alongside two other "
+    "cytotoxics, which is not the exposure in either cohort that produced the "
+    "22.7% and 13.6% figures (Henricks 2018, PMID 30348537, and Lunenburg 2018, "
+    "PMID 30361102 — both Dutch, largely colorectal, and predominantly "
+    "capecitabine or lower-dose infusional 5-FU). Applying either to a patient "
+    "on TPF would understate the risk: observed grade >=3 toxicity on TPF in "
+    "Indian routine practice was neutropenia 56.9%, febrile neutropenia 20.7%, "
+    "mucositis 67.2% and diarrhoea 74.1% (Patil 2016, J Community Support Oncol "
+    "14(10):412-419, n=58). Those are WHOLE-COHORT rates, not rates among "
+    "panel-negative patients, so they are not a substitute comparator either "
+    "and no figure is quoted as one here. What applies is the CPIC caveat "
+    "below, and the fact that this regimen's toxicity is high before genotype "
+    "is considered at all."
 )
 
 _CARRIER_REFUSAL = (
@@ -160,6 +194,20 @@ def compute(assay: AssayResult) -> ResidualRisk:
 
     rate, source = _WILDTYPE_RATES.get(assay.regimen, (None, None))
 
+    if rate is None:
+        refusal = (
+            _TPF_REFUSAL if assay.regimen is Regimen.INDUCTION_TPF else _REFUSAL
+        )
+        return ResidualRisk(
+            quoted_rate=None,
+            rate_source=None,
+            regimen=assay.regimen,
+            panel_sensitivity=PANEL_SENSITIVITY,
+            cpic_caveat=f"{CPIC_CAVEAT}; and {CPIC_CAVEAT_2}",
+            cpic_citation=CPIC_CITATION,
+            refusal_reason=refusal,
+        )
+
     return ResidualRisk(
         quoted_rate=rate,
         rate_source=source,
@@ -167,7 +215,7 @@ def compute(assay: AssayResult) -> ResidualRisk:
         panel_sensitivity=PANEL_SENSITIVITY,
         cpic_caveat=f"{CPIC_CAVEAT}; and {CPIC_CAVEAT_2}",
         cpic_citation=CPIC_CITATION,
-        refusal_reason=None if rate else _REFUSAL,
+        refusal_reason=None,
     )
 
 

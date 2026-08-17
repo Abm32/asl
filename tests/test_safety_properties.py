@@ -94,7 +94,13 @@ def _scrub(text: str) -> str:
     ids=["panel_negative", "2A_het", "2A_hom", "13_hom", "c2846_het", "hapb3_hom"],
 )
 @pytest.mark.parametrize(
-    "regimen", [Regimen.SYSTEMIC, Regimen.CHEMORADIATION, Regimen.UNKNOWN]
+    "regimen",
+    [
+        Regimen.SYSTEMIC,
+        Regimen.CHEMORADIATION,
+        Regimen.INDUCTION_TPF,
+        Regimen.UNKNOWN,
+    ],
 )
 def test_no_input_produces_an_all_clear(genotypes, regimen) -> None:
     text = _scrub(render(build(_assay(genotypes, regimen=regimen))))
@@ -189,6 +195,62 @@ def test_systemic_and_chemoradiation_quote_different_rates() -> None:
     chemorad = render(build(_assay({}, regimen=Regimen.CHEMORADIATION)))
     assert "22.7% (231/1018)" in systemic and "13.6%" not in systemic
     assert "13.6% (105/771)" in chemorad and "22.7%" not in chemorad
+
+
+# ---------------------------------------------------------------------------
+# Refusal 6b: a regimen with no published comparator gets no borrowed rate.
+#
+# This is the Indian majority case. Induction TPF for head and neck cancer had
+# no bucket of its own, so it mapped to SYSTEMIC and a patient on 5-FU
+# 750 mg/m2/day D1-D5 plus docetaxel and cisplatin was shown 22.7% — measured in
+# a Dutch, largely colorectal, mostly capecitabine cohort. Observed grade >=3
+# toxicity on TPF in Indian routine practice is roughly threefold that
+# (Patil 2016, J Community Support Oncol 14(10):412-419, n=58).
+# ---------------------------------------------------------------------------
+
+
+def test_induction_tpf_never_borrows_the_systemic_rate() -> None:
+    """The regimen axis of refusal 11: no other group's rate, in either form."""
+    interp = build(_assay({}, regimen=Regimen.INDUCTION_TPF))
+    assert interp.residual.quoted_rate is None
+    assert interp.residual.refusal_reason is not None
+
+    text = render(interp)
+    assert "RATE WITHHELD" in text
+    assert "Regimen-matched rate" not in text
+    assert "of patients without an actionable DPYD variant experienced" not in text
+
+
+def test_induction_tpf_refusal_states_why_the_comparator_is_absent() -> None:
+    """A refusal has to be actionable: it must name what is missing and why."""
+    reason = build(_assay({}, regimen=Regimen.INDUCTION_TPF)).residual.refusal_reason
+    assert reason is not None
+    # Names the exposure that makes the published cohorts inapplicable.
+    assert "750 mg/m2/day" in reason
+    # Cites the observed Indian rates, and both source studies it is departing from.
+    assert "PMID 30348537" in reason and "PMID 30361102" in reason
+    assert "67.2%" in reason  # observed mucositis on TPF
+    # And states that the observed figures are NOT a substitute comparator,
+    # so this fix cannot be read as swapping one misattributed rate for another.
+    assert "WHOLE-COHORT" in reason
+    assert "not a substitute comparator" in reason
+
+
+def test_every_regimen_either_quotes_a_matched_rate_or_refuses() -> None:
+    """No regimen may fall through to a default rate.
+
+    Asserted across the whole enum so that adding a member without adding either
+    a rate or a refusal fails here rather than silently inheriting one.
+    """
+    for regimen in Regimen:
+        rr = build(_assay({}, regimen=regimen)).residual
+        if rr.quoted_rate is None:
+            assert rr.refusal_reason, f"{regimen}: no rate and no refusal"
+        else:
+            assert rr.rate_source, f"{regimen}: rate without a source"
+            assert regimen in (Regimen.SYSTEMIC, Regimen.CHEMORADIATION), (
+                f"{regimen}: quoted a rate that was measured in another setting"
+            )
 
 
 def test_the_attributable_fraction_is_never_quoted_as_sensitivity() -> None:

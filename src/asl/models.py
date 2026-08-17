@@ -60,10 +60,32 @@ class Regimen(str, Enum):
     at lower fluoropyrimidine doses (Lunenburg 2018). Quoting one where the
     other applies misleads in both directions, so ``residual`` refuses to quote
     a rate when this is ``UNKNOWN``.
+
+    ``INDUCTION_TPF`` is separate from ``SYSTEMIC`` on purpose, and it is the
+    setting that matters most in India. Induction docetaxel/cisplatin/5-FU for
+    locally advanced head and neck cancer delivers 5-FU at 750 mg/m2/day as a
+    continuous infusion on days 1-5 alongside two other cytotoxics — and head
+    and neck cancer is one of India's largest cancer groups (oral cavity and
+    pharynx alone: 198,438 incident cases in 2022, ICMR-NCDIR, PMID 36510887).
+    Observed grade >=3 toxicity in Indian routine practice on this regimen is
+    roughly threefold the Henricks figure: neutropenia 56.9%, febrile
+    neutropenia 20.7%, mucositis 67.2%, diarrhoea 74.1% (Patil 2016,
+    J Community Support Oncol 14(10):412-419, n=58 — "the toxicities differ
+    substantially from the toxicities seen in trial settings").
+
+    Before this member existed, TPF had no correct bucket and mapped to
+    ``SYSTEMIC``, so an Indian head-and-neck patient was shown a 22.7% rate
+    measured in a Dutch, largely colorectal, mostly capecitabine cohort. There
+    is no published wild-type-stratified grade >=3 rate for this regimen, so
+    ``residual`` **refuses to quote one** rather than substituting the nearest
+    available number. The refusal is the correct output: the honest answer is
+    that the comparator does not exist yet, and inventing a proxy for it is how
+    a Dutch rate ends up in an Indian patient's report.
     """
 
     SYSTEMIC = "systemic"
     CHEMORADIATION = "chemoradiation"
+    INDUCTION_TPF = "induction_tpf"
     UNKNOWN = "unknown"
 
 
