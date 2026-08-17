@@ -22,9 +22,6 @@ dependencies = [
     # report. interpret.require_hapb3_capable_engine() refuses to interpret on
     # an older engine rather than emitting a report with the disclosure
     # silently absent.
-    #
-    # NOTE 0.9.0 is not on PyPI yet; install the engine from a local checkout
-    # until it publishes.
     "anukriti-pgx-core==0.9.0",
 ]
 
