@@ -31,15 +31,23 @@ from .pipeline import build
 # inferred from whichever columns happen to be present in a spreadsheet.
 PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
     "cpic4": (
-        "CPIC 4-variant DPYD panel",
+        "CPIC 4-variant DPYD panel (reaches HapB3 via the tag SNP)",
         CPIC_ACTIONABLE,
     ),
     "cpic4_plus_sas": (
         "CPIC 4-variant panel + 4 alleles common in South Asians",
         CPIC_ACTIONABLE + ("rs1801265", "rs1801160", "rs1801159", "rs2297595"),
     ),
+    # The same four actionable variants, but reaching HapB3 through the CAUSAL
+    # intronic variant as well as the tag SNP. This is what CPIC now recommends
+    # and what some commercial DPYD panels already genotype; it is the only
+    # preset that can distinguish a true HapB3 carrier from a tag-only positive.
+    "cpic4_causal": (
+        "CPIC 4-variant panel + the causal HapB3 variant c.1129-5923C>G",
+        CPIC_ACTIONABLE + ("rs75017182",),
+    ),
     "full": (
-        "All 13 DPYD loci anukriti-pgx-core calls",
+        f"All {len(CPIC_ALLELE)} DPYD loci anukriti-pgx-core calls",
         tuple(CPIC_ALLELE.keys()),
     ),
 }
@@ -165,13 +173,33 @@ def cmd_panels(_args: argparse.Namespace) -> int:
 
 
 def cmd_demo(args: argparse.Namespace) -> int:
-    """The walkthrough patient: panel-negative, then the same patient sequenced."""
+    """The walkthrough patients: panel-negative, sequenced, and the tag-only case."""
     pop = "Central/South Asian"
     drug = Drug(args.drug)
     if args.panel == "cpic4":
         print("PATIENT: 52F, Kerala, stage III colon adenocarcinoma, adjuvant CAPOX.")
         print("LAB: 4-variant DPYD PCR panel. All four negative.\n")
         assay = _assay("cpic4", _all_negative("cpic4"), Regimen.SYSTEMIC, pop, drug)
+    elif args.panel == "tag_only":
+        # The commonest actionable finding in this population, on the regimen
+        # that carries India's largest fluoropyrimidine exposure, from the assay
+        # Indian labs actually run.
+        print(
+            "PATIENT: 54M, locally advanced oral cavity SCC (technically\n"
+            "         unresectable), for induction docetaxel/cisplatin/5-FU."
+        )
+        print(
+            "LAB: 4-variant DPYD PCR panel. HapB3 heterozygous — detected at the\n"
+            "     exonic TAG SNP c.1236G>A (rs56038477). The causal intronic\n"
+            "     variant c.1129-5923C>G (rs75017182) was NOT tested.\n"
+        )
+        assay = _assay(
+            "cpic4",
+            _all_negative("cpic4") | {"rs56038477": Zygosity.HET},
+            Regimen.INDUCTION_TPF,
+            pop,
+            Drug.FLUOROURACIL,
+        )
     else:
         print("PATIENT: same patient, with research sequencing added.")
         print("FOUND: *9A heterozygous, *6 heterozygous.\n")
@@ -353,7 +381,17 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("demo", help="run the walkthrough patient")
-    p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
+    p.add_argument(
+        "--panel",
+        default="cpic4",
+        choices=[*sorted(PANELS), "tag_only"],
+        help=(
+            "cpic4: panel-negative colorectal patient. "
+            "tag_only: head-and-neck patient on induction TPF whose HapB3 call "
+            "rests on the exonic tag SNP (CPIC's mandated disclosure fires). "
+            "cpic4_plus_sas: the same patient with research sequencing."
+        ),
+    )
     p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
     p.set_defaults(func=cmd_demo)
 

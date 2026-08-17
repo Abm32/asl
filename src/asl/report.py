@@ -13,6 +13,7 @@ Two engine artifacts are deliberately suppressed:
 
 from __future__ import annotations
 
+from .interpret import assayed_variant_name
 from .models import Interpretation, Regimen
 from .residual import untested_statement
 
@@ -68,10 +69,18 @@ def render(interp: Interpretation) -> str:
     # --- tested vs not tested --------------------------------------------
     out.append("")
     out.append("[ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT")
-    tested = [c.allele_label or c.rsid for c in a.tested]
-    neg = [c.allele_label or c.rsid for c in a.tested if c.copies == 0]
+    # Names the variant the assay actually read, not CPIC's compound allele
+    # name. For the HapB3 tag those differ, and using the compound name here
+    # would print "c.1129-5923C>G, c.1236G>A (HapB3)" as tested while the
+    # untested list below correctly says c.1129-5923C>G was never assayed.
+    tested = [assayed_variant_name(c.rsid, c.allele_label) for c in a.tested]
+    neg = [
+        assayed_variant_name(c.rsid, c.allele_label)
+        for c in a.tested
+        if c.copies == 0
+    ]
     pos = [
-        f"{c.allele_label or c.rsid} ({c.zygosity.value}, "
+        f"{assayed_variant_name(c.rsid, c.allele_label)} ({c.zygosity.value}, "
         f"{c.copies} cop{'y' if c.copies == 1 else 'ies'})"
         for c in a.found
     ]

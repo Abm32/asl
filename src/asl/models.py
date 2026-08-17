@@ -277,6 +277,13 @@ class Interpretation:
     overspecified: bool = False
     copies_detected: int = 0
     allele_counts: tuple[tuple[str, int], ...] = ()  # (allele, copies) from engine
+    hapb3_basis: str = ""  # engine's record of which locus produced a
+                           # HapB3-family decreased-function call:
+                           # "haplotype" | "causal" | "tag_only" |
+                           # "tag_without_causal" | "". Carried verbatim from
+                           # pgx-core 0.9.0; asl never computes it. Drives
+                           # CPIC's mandated tag-SNP disclosure and NEVER
+                           # changes the phenotype or the clinical action.
     engine_version: str = ""
     generated_at: datetime = field(
         default_factory=lambda: datetime.now(UTC)

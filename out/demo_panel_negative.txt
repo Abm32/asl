@@ -3,25 +3,27 @@ LAB: 4-variant DPYD PCR panel. All four negative.
 
 ============================================================================
 DPYD PHARMACOGENOMIC INTERPRETATION
-Panel: CPIC 4-variant DPYD panel   Regimen: systemic   Population: Central/South Asian
+Panel: CPIC 4-variant DPYD panel (reaches HapB3 via the tag SNP)   Regimen: systemic   Population: Central/South Asian
 ============================================================================
 
 CPIC CALL (unmodified, attributed to CPIC)
   Diplotype   : *1/*1
   Phenotype   : Normal Metabolizer
   CPIC action : STANDARD  (for capecitabine)
-  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.7.3
+  Source      : CPIC DPYD guideline (Amstutz 2018, PMID 29152729) via anukriti-pgx-core 0.9.0
   NOTE: the dose recommendation above is CPIC's. asl does not recommend doses.
 
 [ASL-ASSAY-01]  WHAT WAS TESTED, AND WHAT WAS NOT
-  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
-  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1129-5923C>G, c.1236G>A (HapB3)
+  Tested (4): c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1236G>A (HapB3 exonic tag SNP)
+  Tested & negative : c.1905+1G>A (*2A) | c.1679T>G (*13) | c.2846A>T | c.1236G>A (HapB3 exonic tag SNP)
   Tested & FOUND    : (none)
 
-  Absence is NOT established for: c.85T>C (*9A), c.2194G>A (*6), c.1627A>G
-  (*5), c.496A>G, c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T
-  (*12), c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD
-  panel'. An untested locus is not a negative result.
+  Absence is NOT established for: c.1129-5923C>G, c.2279C>T, c.2639G>T,
+  c.1475C>T, c.85T>C (*9A), c.2194G>A (*6), c.1627A>G (*5), c.496A>G,
+  c.1601G>A (*4), c.703C>T (*8), c.2983G>T (*10), c.1156G>T (*12),
+  c.1906A>C. These variants were not assayed by 'CPIC 4-variant DPYD panel
+  (reaches HapB3 via the tag SNP)'. An untested locus is not a negative
+  result.
 
 [ASL-POP-01]  LOCI WITH VERY LOW EXPECTED YIELD HERE
   c.1679T>G (*13)
@@ -35,7 +37,7 @@ CPIC CALL (unmodified, attributed to CPIC)
 
 [ASL-RESID-01]  RESIDUAL RISK — THIS IS NOT AN ALL-CLEAR
   No variant was found at the 4 loci that returned a call.
-  9 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
+  13 further loci were not assayed — see ASL-ASSAY-01 above. This is not a negative result for them.
 
   CPIC states: "patients without a DPYD decreased/no function variant may still experience severe toxicity due to other genetic, environmental or other factors; and a genetic test investigating only selected decreased/no function variants does not fully rule out DPD defects."
     (CPIC DPYD guideline, Amstutz et al. 2018, PMID 29152729)
@@ -58,5 +60,5 @@ WHAT THIS REPORT DOES NOT DO
   is established.
   It does not treat an untested locus as a negative result.
 ----------------------------------------------------------------------------
-Generated 2026-08-16T18:56:38+00:00
+Generated 2026-08-17T09:26:49+00:00
 Research tool. Not a diagnostic device. Informs clinical management; does not drive it.

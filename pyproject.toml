@@ -9,13 +9,23 @@ description = "Anukriti Oncology Safety Ledger — evidence-attributed PGx inter
 requires-python = ">=3.11"
 dependencies = [
     # Pinned exactly per AGENTS.md: a new engine version carries CPIC table
-    # updates that need clinical regression review first. 0.8.1 reviewed and
+    # updates that need clinical regression review first. 0.9.0 reviewed and
     # approved 2026-08-17 — see anukriti-pgx-core
-    # docs/REGRESSION_REVIEW_0.7.3_to_0.8.1.md. 1901 genotype cases across 12
-    # genes: every behavioural difference is in TPMT, the other eleven genes are
-    # bit-identical, so DPYD is untouched. Includes the TPMT genotype-inversion
-    # safety fix (a homozygous-reference patient was called Poor Metabolizer).
-    "anukriti-pgx-core==0.8.1",
+    # docs/REGRESSION_REVIEW_0.8.2_to_0.9.0.md. 1,991 genotype cases:
+    # SAFETY_FIX 64, NOMENCLATURE 18, SAME 1909; zero NEWLY_INDETERMINATE,
+    # zero OVER_RESTRICTION_FIX, zero PHENOTYPE_CHANGE, zero ACTION_LOST.
+    #
+    # This is a FLOOR, not a preference. 0.9.0 introduced
+    # Diplotype.hapb3_basis, and without it asl cannot tell a HapB3 call
+    # inferred from the benign tag SNP from one observed at the causal variant
+    # — a distinction CPIC's guideline requires to be stated in the test
+    # report. interpret.require_hapb3_capable_engine() refuses to interpret on
+    # an older engine rather than emitting a report with the disclosure
+    # silently absent.
+    #
+    # NOTE 0.9.0 is not on PyPI yet; install the engine from a local checkout
+    # until it publishes.
+    "anukriti-pgx-core==0.9.0",
 ]
 
 [project.optional-dependencies]

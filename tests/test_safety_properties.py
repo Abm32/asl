@@ -776,7 +776,11 @@ def test_panel_negative_line_states_how_many_loci_returned_a_call() -> None:
     )
     text = render(build(assay))
     assert "No variant was found at the 1 locus that returned a call." in text
-    assert "12 further loci were not assayed" in text
+    # Derived rather than hardcoded: the panel grows as pgx-core gains callable
+    # alleles (13 -> 17 loci at engine 0.9.0), and a literal count here would
+    # have to be edited every time — which is how a test starts asserting the
+    # wrong thing confidently.
+    assert f"{len(ALL_RSIDS) - 1} further loci were not assayed" in text
     assert "among the loci tested" not in text
 
 

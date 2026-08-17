@@ -51,12 +51,12 @@ src/asl/
   cli.py         asl demo | panels | interpret | quadrant
 src/asl/data/   generated from CPIC's API, never hand-edited (CI checks drift)
 scripts/         regen_evidence_tables.py [--check]
-tests/           140 tests; every refusal above has one
+tests/           166 tests; every refusal above has one
 out/             worked outputs, regenerated on release
 fixtures/        the CSV column layout to ask a site for
 ```
 
-Sole dependency: `anukriti-pgx-core==0.7.3`, pinned exactly — a new engine
+Sole dependency: `anukriti-pgx-core==0.9.0`, pinned exactly — a new engine
 version carries CPIC table updates that need clinical regression review first.
 
 ---
@@ -123,10 +123,13 @@ cycle 1** — while stating that its database "will remain at AV=0.5 until then"
 
 So the API returns 0.5, `src/asl/data/` says 0.5, `--check` passes, and the fact
 that the recommendation is about to move is invisible to every automated guard.
-**In CPIC's own Central/South Asian data HapB3 is 77.5% of the entire actionable
-allele frequency** (0.019658 of 0.025380) — an Indian DPYD panel is, to a first
-approximation, a HapB3 test. So this lands on nearly every Indian patient who
-tests positive.
+**In CPIC's own Central/South Asian data HapB3 is 77.5% of what the guideline
+panel can find** (0.019658 of the 0.025375 summed across the four EMA/CPIC panel
+variants) **and 60.5% of every actionable DPYD allele CPIC publishes** (0.019658
+of 0.032505). Both denominators are given deliberately: the first is what a
+guideline-conformant panel reaches, the second what the gene can carry. On either
+reading, an Indian DPYD panel is to a first approximation a HapB3 test, so this
+lands on nearly every Indian patient who tests positive.
 
 `asl` reports CPIC's current value, flags the announced one alongside it, and
 **does not pre-apply it**. Dosing on a pre-publication comment would be an
@@ -160,7 +163,7 @@ negatives. Both are the same defect — one number doing two jobs.
 ```
 CPIC live API ──(scripts/regen_evidence_tables.py --check, gated in CI)──┐
                                                                         ▼
-anukriti-pgx-core ==0.8.1 ──▶ interpret ──▶ pipeline ──▶ report    src/asl/data/
+anukriti-pgx-core ==0.9.0 ──▶ interpret ──▶ pipeline ──▶ report    src/asl/data/
    (CPIC truth, decides)         │            │                      (pinned, offline)
                                  │            ├── evidence  (provenance per allele)
                                  │            ├── flags     (named conflicts)
@@ -311,9 +314,9 @@ one patient appearing twice was counted as two, in two contradictory cells.
 
 | Phase | State |
 |---|---|
-| 0 · engine correctness (`pgx-core` 0.7.2 + 0.7.3) | **done**, tagged |
+| 0 · engine correctness (`pgx-core` 0.7.2 → 0.9.0) | **done**, tagged |
 | 1 · generated evidence tables, CI drift check | **done** — 156 alleles across DPYD, NUDT15, TPMT |
-| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 140 tests |
+| 2 · `assay` + `residual`, no-all-clear guarantee | **done** — 166 tests |
 | 3 · `interpret` + `flags` + `report` + CLI | **done** |
 | 4 · `ledger` + API + auth | ledger done + hardened; HTTP layer live in `anukriti-api` (authenticated) |
 | 5 · `narrate` (the only LLM call) | not started |

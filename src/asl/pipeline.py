@@ -21,7 +21,7 @@ otherwise produce a confidently wrong report:
 from __future__ import annotations
 
 from . import evidence, flags, interpret, residual
-from .models import AssayResult, EvidenceRecord, Interpretation
+from .models import AssayResult, EvidenceRecord, Flag, Interpretation
 
 GENE = "DPYD"
 
@@ -73,9 +73,15 @@ def build(assay: AssayResult) -> Interpretation:
                 f"{', '.join(sorted(known))}."
             )
 
-    diplotype, phenotype, action, overspecified, copies, counts = interpret.call_engine(
-        assay
-    )
+    (
+        diplotype,
+        phenotype,
+        action,
+        overspecified,
+        copies,
+        counts,
+        hapb3_basis,
+    ) = interpret.call_engine(assay)
 
     # Provenance for every allele actually found.
     records: list[EvidenceRecord] = []
@@ -100,6 +106,26 @@ def build(assay: AssayResult) -> Interpretation:
     if hap:
         collected.append(hap)
 
+    # CPIC's mandated tag-SNP disclosure. Emitted from the engine's own record of
+    # which locus produced the call, never inferred from the assay here: the
+    # engine knows what it matched, and duplicating that logic is how the two
+    # would drift apart.
+    disclosure = interpret.hapb3_disclosure(hapb3_basis)
+    if disclosure:
+        summary, detail = disclosure
+        collected.append(
+            Flag(
+                rule_id=(
+                    "P5_DPYD_HAPB3_TAG_WITHOUT_CAUSAL"
+                    if hapb3_basis == "tag_without_causal"
+                    else "P5_DPYD_HAPB3_TAG_SNP_BASIS"
+                ),
+                summary=summary,
+                detail=detail,
+                citations=("38129972", "38634417", "28295243"),
+            )
+        )
+
     return Interpretation(
         assay=assay,
         diplotype=diplotype,
@@ -112,5 +138,6 @@ def build(assay: AssayResult) -> Interpretation:
         overspecified=overspecified,
         copies_detected=copies,
         allele_counts=tuple(sorted(counts.items())),
+        hapb3_basis=hapb3_basis,
         engine_version=interpret.engine_version(),
     )

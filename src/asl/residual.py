@@ -48,6 +48,7 @@ The numbers, and why each is used where it is:
 from __future__ import annotations
 
 from . import evidence
+from .interpret import assayed_variant_name
 from .models import AssayResult, Regimen, ResidualRisk
 
 # Verbatim from the CPIC DPYD guideline (Amstutz et al., Clin Pharmacol Ther
@@ -147,20 +148,27 @@ def _found_non_normal(assay: AssayResult) -> tuple[str, ...]:
 
     Falls back to treating an uncitable allele as non-normal, because the safe
     direction when the function call cannot be read is to withhold the rate.
+
+    The *displayed* name is the variant the assay actually read, not CPIC's
+    compound allele name: printing "Found: c.1129-5923C>G, c.1236G>A (HapB3)" for
+    a tag-only positive asserts that the causal variant was observed, which is
+    the exact inference CPIC requires to be qualified rather than stated. The
+    function lookup still uses CPIC's name, because that is the row carrying it.
     """
     out: list[str] = []
     for call in assay.found:
         label = call.allele_label
+        display = assayed_variant_name(call.rsid, label)
         if not label:
             out.append(call.rsid)
             continue
         try:
             fn = evidence.record_for(assay.gene, label).clinical_function
         except evidence.EvidenceError:
-            out.append(label)
+            out.append(display)
             continue
         if (fn or "").strip().lower() != _NORMAL_FUNCTION:
-            out.append(label)
+            out.append(display)
     return tuple(out)
 
 
