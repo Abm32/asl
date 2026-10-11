@@ -275,8 +275,9 @@ def hapb3_disclosure(basis: str) -> tuple[str, str] | None:
 
     if basis == "tag_without_causal":
         return (
-            "This decreased-function call rests on the tag SNP, and the causal "
-            "variant was tested and NOT found.",
+            ("This decreased-function call rests on the tag SNP, and the causal "
+            "variant was tested and NOT found."
+            ),
             "    CPIC requires this to be disclosed: " + _CPIC_TAG_DISCLOSURE + ".\n"
             "    In this patient the causal variant c.1129-5923C>G (rs75017182) "
             "WAS tested\n"
@@ -305,8 +306,9 @@ def hapb3_disclosure(basis: str) -> tuple[str, str] | None:
 
     # basis == "tag_only"
     return (
-        "This decreased-function call was inferred from the exonic tag SNP; the "
-        "causal variant was not tested.",
+        ("This decreased-function call was inferred from the exonic tag SNP; the "
+        "causal variant was not tested."
+        ),
         "    CPIC requires this to be disclosed: " + _CPIC_TAG_DISCLOSURE + ".\n"
         "    The causal variant c.1129-5923C>G (rs75017182) was NOT among the "
         "loci this\n"
