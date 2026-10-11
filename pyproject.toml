@@ -22,7 +22,7 @@ dependencies = [
     # report. interpret.require_hapb3_capable_engine() refuses to interpret on
     # an older engine rather than emitting a report with the disclosure
     # silently absent.
-    "anukriti-pgx-core==0.9.0",
+    "anukriti-pgx-core==0.10.0",
 ]
 
 [project.optional-dependencies]
