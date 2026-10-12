@@ -54,6 +54,26 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
         "CPIC 4-variant panel + the causal HapB3 variant c.1129-5923C>G",
         CPIC_ACTIONABLE + ("rs75017182",),
     ),
+    # The AMP/ACMG/CPIC/CAP/DPWG/ESPT/PharmGKB/PharmVar joint consensus (2024,
+    # PMID 39032821) names seven Tier 1 "must-test" DPYD variants, not four.
+    # Two of them are not in the engine's allele table at all:
+    #
+    #   c.557A>G  (rs115232898) — 2.1% in Africans, 0.003% in South Asians
+    #   c.868A>G  (rs146356975) — 0.2% in Africans, 0.000% in South Asians
+    #
+    # Both are African-ancestry variants. AMP explicitly permits a laboratory
+    # to justify variant selection by the population it serves, so omitting
+    # them from a South-Asian panel is defensible — but it must be SAID, which
+    # is why this preset is not called `amp_tier1`. Serving African-ancestry
+    # patients means adding them to the engine first.
+    #
+    # What this preset adds over `cpic4`: the causal HapB3 variant, and
+    # c.2279C>T — Tier 1, absent from every commercial platform the consensus
+    # surveyed, 0.5-0.63% in Indians and 0.000% in Europeans.
+    "amp_tier1_sas": (
+        "AMP Tier 1 less the two African-ancestry alleles the engine lacks",
+        CPIC_ACTIONABLE + ("rs75017182", "rs112766203"),
+    ),
     "full": (
         f"All {len(CPIC_ALLELE)} DPYD loci anukriti-pgx-core calls",
         tuple(CPIC_ALLELE.keys()),

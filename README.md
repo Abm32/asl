@@ -234,6 +234,20 @@ Each is enforced by a test in `tests/test_safety_properties.py`.
 `fixtures/cohort_template.csv` is the column layout to ask for. One row per
 patient, no identifiers.
 
+A blank genotype cell means **not tested**. A `0` means tested and reference.
+They are different claims and the template never conflates them, so leave a
+column blank rather than filling it with zeros the assay did not measure.
+
+The template carries three loci beyond the CPIC four that most sites will not
+be able to fill, and asks for them anyway because a column that is never
+offered is never collected:
+
+| Locus | Allele | Why it is there |
+| --- | --- | --- |
+| `rs75017182` | c.1129-5923C>G | The **causal** HapB3 variant. Without it a tag-positive result cannot be confirmed or refuted |
+| `rs112766203` | c.2279C>T | AMP Tier 1 must-test. 0.5–0.63% in Indians, 0.000% in Europeans, on no commercial panel |
+| `rs55674432` | c.2639G>T | AMP Tier 2. 0.079% in South Asians, 0.000% in Europeans |
+
 ```
 asl quadrant --csv their_data.csv
 ```

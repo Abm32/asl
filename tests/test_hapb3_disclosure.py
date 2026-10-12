@@ -194,9 +194,8 @@ def test_no_hapb3_allele_means_no_disclosure_and_no_basis() -> None:
             (*GUIDELINE_PANEL, CAUSAL),
             "haplotype",
         ),
-        ({TAG: Zygosity.HET}, (*GUIDELINE_PANEL, CAUSAL), "tag_without_causal"),
     ],
-    ids=["tag_only", "causal", "haplotype", "tag_without_causal"],
+    ids=["tag_only", "causal", "haplotype"],
 )
 def test_the_cpic_call_is_identical_whatever_the_basis(
     found, tested, expected_basis
@@ -205,11 +204,39 @@ def test_the_cpic_call_is_identical_whatever_the_basis(
     50% starting dose, however the laboratory came to know about it.
 
     If this fails, ``asl`` has started reclassifying rather than disclosing.
+
+    ``tag_without_causal`` is deliberately not in this set — see
+    :func:`test_a_refuted_tag_is_withdrawn_not_reclassified`.
     """
     interp = build(_assay(found, tested))
     assert interp.hapb3_basis == expected_basis
     assert interp.phenotype == "Intermediate Metabolizer"
     assert interp.cpic_recommendation_action == "REDUCE_50PCT"
+
+
+def test_a_refuted_tag_is_withdrawn_not_reclassified() -> None:
+    """The causal variant was tested and is absent, so the inference is refuted.
+
+    The engine withdraws the decreased-function call — CPIC has no stand-alone
+    ``c.1236G>A`` allele, so once the causal locus is observed to be reference
+    there is nothing left to call. ``asl`` reports the standard dose and still
+    carries the disclosure, because the laboratory did find the tag and that
+    belongs in the report.
+
+    This is the one case where the honest answer is *less* intervention: acting
+    on it would mean a 50% reduction in curative-intent treatment on a refuted
+    inference, in the allele where reduction carries a measured efficacy cost
+    (PFS HR 1.43, 95% CI 1.10-1.86, p=0.007; Knikman 2023, PMID 37639651).
+    """
+    interp = build(_assay({TAG: Zygosity.HET}, (*GUIDELINE_PANEL, CAUSAL)))
+    assert interp.hapb3_basis == "tag_without_causal"
+    assert interp.phenotype == "Normal Metabolizer"
+    assert interp.cpic_recommendation_action == "STANDARD"
+
+    # Withdrawn from the call, never from the report.
+    assert any(
+        f.rule_id == "P5_DPYD_HAPB3_TAG_WITHOUT_CAUSAL" for f in interp.flags
+    )
 
 
 def test_disclosure_helper_returns_none_only_where_intended() -> None:
