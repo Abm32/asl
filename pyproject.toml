@@ -9,20 +9,42 @@ description = "Anukriti Oncology Safety Ledger — evidence-attributed PGx inter
 requires-python = ">=3.11"
 dependencies = [
     # Pinned exactly per AGENTS.md: a new engine version carries CPIC table
-    # updates that need clinical regression review first. 0.9.0 reviewed and
-    # approved 2026-08-17 — see anukriti-pgx-core
-    # docs/REGRESSION_REVIEW_0.8.2_to_0.9.0.md. 1,991 genotype cases:
-    # SAFETY_FIX 64, NOMENCLATURE 18, SAME 1909; zero NEWLY_INDETERMINATE,
-    # zero OVER_RESTRICTION_FIX, zero PHENOTYPE_CHANGE, zero ACTION_LOST.
+    # updates that need clinical regression review first.
     #
-    # This is a FLOOR, not a preference. 0.9.0 introduced
-    # Diplotype.hapb3_basis, and without it asl cannot tell a HapB3 call
-    # inferred from the benign tag SNP from one observed at the causal variant
-    # — a distinction CPIC's guideline requires to be stated in the test
-    # report. interpret.require_hapb3_capable_engine() refuses to interpret on
-    # an older engine rather than emitting a report with the disclosure
-    # silently absent.
-    "anukriti-pgx-core==0.10.0",
+    # 0.9.0 is a FLOOR, not a preference. It introduced Diplotype.hapb3_basis,
+    # and without it asl cannot tell a HapB3 call inferred from the benign tag
+    # SNP from one observed at the causal variant — a distinction CPIC's
+    # guideline requires to be stated in the test report.
+    # interpret.require_hapb3_capable_engine() refuses to interpret on an older
+    # engine rather than emitting a report with the disclosure silently absent.
+    #
+    # 0.11.0 changes three things, and the first changes a DOSE:
+    #
+    #   1. HapB3 `tag_without_causal` is WITHDRAWN. When rs75017182 is tested
+    #      and reference while the exonic tag rs56038477 is present, the call
+    #      falls back to *1/*1 Normal Metabolizer / STANDARD instead of
+    #      Intermediate Metabolizer / REDUCE_50PCT. hapb3_basis still returns
+    #      "tag_without_causal", so asl still emits CPIC's disclosure — the
+    #      finding is withdrawn from the CALL, never from the REPORT.
+    #      This is the LESS conservative direction. It is the first change in
+    #      this library to move that way, and it has no cohort measurement:
+    #      the 1000 Genomes harness never passes rs75017182 as a reference
+    #      observation, so it does not exercise this at all.
+    #   2. Diplotype truncation is ordered by CPIC function instead of allele
+    #      name. Before, HapB3 and every c.-named allele always lost the
+    #      tie-break to normal-function star alleles, so an overspecified
+    #      genotype resolved toward Normal Metabolizer. 22 phenotype
+    #      disagreements with PyPGx on 1000 Genomes, all less conservative,
+    #      are now 0 (2038/2038).
+    #   3. The DPYD panel widens from 18 alleles to 33, which is why
+    #      `amp_tier1_sas` could be renamed `amp_tier1` — c.557A>G and
+    #      c.868A>G are now callable. GeT-RM silent false negatives 8 -> 0.
+    #
+    # NO CLINICIAN HAS SIGNED OFF on any of the three. See anukriti-pgx-core
+    # docs/REGRESSION_REVIEW_0.10.0_to_0.11.0.md, which records that, and
+    # note that 0.10.0's own review verdict was "NOT APPROVED — one blocking
+    # finding. A human clinician must sign off" and it was published anyway.
+    "anukriti-pgx-core==0.11.0",
 ]
 
 [project.optional-dependencies]
