@@ -135,6 +135,10 @@ def build(assay: AssayResult) -> Interpretation:
             )
         )
 
+    recommendation, score_range, cpic_citations = interpret.cpic_recommendation(
+        phenotype, assay.drug.value
+    )
+
     return Interpretation(
         assay=assay,
         diplotype=diplotype,
@@ -148,5 +152,8 @@ def build(assay: AssayResult) -> Interpretation:
         copies_detected=copies,
         allele_counts=tuple(sorted(counts.items())),
         hapb3_basis=hapb3_basis,
+        cpic_recommendation_text=recommendation,
+        cpic_activity_score_range=score_range,
+        cpic_citations=cpic_citations,
         engine_version=interpret.engine_version(),
     )

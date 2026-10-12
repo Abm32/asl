@@ -448,7 +448,7 @@ def test_the_cli_quadrant_supersedes_a_duplicate_csv_row(tmp_path) -> None:
     )
     buf = io.StringIO()
     with redirect_stdout(buf):
-        cmd_quadrant(argparse.Namespace(csv=str(path), panel="cpic4"))
+        cmd_quadrant(argparse.Namespace(table=str(path), panel="cpic4"))
     out = buf.getvalue()
 
     assert "n = 1 patients" in out

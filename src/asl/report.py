@@ -13,22 +13,164 @@ Two engine artifacts are deliberately suppressed:
 
 from __future__ import annotations
 
-from .interpret import assayed_variant_name
-from .models import AssayMethod, Interpretation, Regimen
+from .interpret import CPIC_ALLELE, assayed_variant_name
+from .models import AssayMethod, Interpretation, Regimen, TestStatus
 from .residual import untested_statement
 
 _W = 76
+
+# Plain-language gloss for each CPIC DPYD phenotype, for the answer band.
+#
+# The gloss restates the phenotype; it never adds a claim. "Normal Metabolizer"
+# carries no statement about the loci that were not read, which is why the band
+# puts the coverage strip and the residual-risk pointer immediately beneath it
+# rather than leaving the phenotype alone at the top of the page.
+_PHENOTYPE_GLOSS: dict[str, str] = {
+    "Normal Metabolizer": "normal DPD activity predicted from the loci that were read",
+    "Intermediate Metabolizer": "REDUCED DPD activity",
+    "Poor Metabolizer": "little or no DPD activity",
+    "Indeterminate": "DPD activity could not be determined",
+}
+
+# Coverage-strip glyphs. ASCII on purpose: this report is read in a terminal, a
+# printed PDF and an email body, and a box-drawing character that renders in one
+# of those is a question mark in another.
+_FOUND, _NEGATIVE, _UNASSAYED = "X", "#", "."
+
+
+def _coverage_strip(interp: Interpretation) -> list[str]:
+    """One glyph per locus: what the assay found, read, and never looked at.
+
+    The strip is in a fixed locus order (``CPIC_ALLELE``), so the same position
+    means the same variant on every patient's report and two reports can be laid
+    side by side. The point it makes in one line is the one the whole package
+    exists to make: how much of the gene a guideline-conformant panel leaves
+    unread.
+    """
+    a = interp.assay
+    by_rsid = {c.rsid: c for c in a.calls}
+    ordered = [r for r in CPIC_ALLELE if r in by_rsid]
+    ordered += [c.rsid for c in a.calls if c.rsid not in CPIC_ALLELE]
+
+    glyphs = []
+    for rsid in ordered:
+        call = by_rsid[rsid]
+        if call.status is TestStatus.NOT_TESTED:
+            glyphs.append(_UNASSAYED)
+        elif call.copies > 0:
+            glyphs.append(_FOUND)
+        else:
+            glyphs.append(_NEGATIVE)
+    found = glyphs.count(_FOUND)
+    neg = glyphs.count(_NEGATIVE)
+    un = glyphs.count(_UNASSAYED)
+    return [
+        f"  COVERAGE  [{''.join(glyphs)}]  {len(glyphs)} DPYD loci asl can call",
+        (
+            f"            {_FOUND} found ({found})   {_NEGATIVE} read, no "
+            f"variant ({neg})   {_UNASSAYED} NOT assayed ({un})"
+        ),
+    ]
+
+
+def _answer_band(interp: Interpretation) -> list[str]:
+    """The top of the report: the answer, the dose, and what qualifies both.
+
+    A report whose answer has to be assembled by a reader from a diplotype, an
+    enum and a residual-risk paragraph three screens down is a report that gets
+    skimmed to its first reassuring word. This band is the deliverable: it says
+    what the result is, what CPIC advises in CPIC's own sentence, how much of
+    the gene was actually read, and how many flags qualify the answer — before
+    anything else on the page.
+    """
+    a = interp.assay
+    out = [_rule("=")]
+    gloss = _PHENOTYPE_GLOSS.get(interp.phenotype)
+    out.append(
+        f"  ANSWER    DPYD {interp.phenotype}"
+        + (f" — {gloss}" if gloss else "")
+    )
+    out.append(
+        f"            Diplotype {interp.diplotype}"
+        + (
+            f"   CPIC activity score {interp.cpic_activity_score_range}"
+            if interp.cpic_activity_score_range
+            else ""
+        )
+    )
+    out.append("")
+    # CPIC's sentence, quoted. See interpret.cpic_recommendation for why this is
+    # a quotation and not a paraphrase.
+    out.extend(_hang(
+        f'CPIC, for {a.drug.value}: "{interp.cpic_recommendation_text}"',
+        "  DOSE      ",
+    ))
+    cites = ", ".join("PMID " + c for c in interp.cpic_citations) or "PMID 29152729"
+    out.extend(_wrap(
+        f"CPIC DPYD guideline ({cites}), quoted. This is CPIC's "
+        f"recommendation. asl does not recommend doses and has not modified "
+        f"this one.",
+        "            ",
+    ))
+    out.append("")
+    out.extend(_coverage_strip(interp))
+    out.append("")
+    n = len(interp.flags)
+    out.extend(_hang(
+        (f"{n} flag{'' if n == 1 else 's'} below "
+         f"qualif{'ies' if n == 1 else 'y'} this answer. " if n else "")
+        + "ASL-RESID-01 states what this result does not exclude; it is part "
+        "of the result, not an appendix to it.",
+        "  READ ON   ",
+    ))
+    out.append(_rule("="))
+    return out
+
+
+def _signatory_block(signatory: str | None) -> list[str]:
+    """Who authorised this report — or an explicit statement that nobody did.
+
+    An unsigned report prints the refusal, never a blank line under the word
+    "Signed", because a blank signature line on a printed page is read as an
+    oversight in the printing rather than as an absent authorisation.
+
+    The qualification requirement is India-specific and is stated rather than
+    assumed: the Supreme Court's December 2017 ruling requires a laboratory
+    report to be signed by a person holding a post-graduate qualification in
+    pathology. asl cannot verify a qualification, so it records what it was
+    given verbatim and says that it did not verify it.
+    """
+    out = ["", _rule(), "AUTHORISATION"]
+    if signatory:
+        out.extend(_wrap(f"Authorised by: {signatory}", "  "))
+        out.extend(_wrap(
+            "Recorded as supplied and not verified by asl. An Indian "
+            "laboratory report must be signed by a person holding a "
+            "post-graduate qualification in pathology (Supreme Court of India, "
+            "December 2017).",
+            "  ",
+        ))
+    else:
+        out.extend(_wrap(
+            "UNSIGNED. No signatory was supplied, so this output has not been "
+            "authorised by anyone and is not a laboratory report. It is the "
+            "deterministic interpretation of a genotype, for review by a "
+            "qualified person who then takes responsibility for it.",
+            "  ",
+        ))
+    return out
 
 
 def _rule(char: str = "-") -> str:
     return char * _W
 
 
-def render(interp: Interpretation) -> str:
+def render(interp: Interpretation, signatory: str | None = None) -> str:
     a = interp.assay
     out: list[str] = []
 
-    out.append(_rule("="))
+    out.extend(_answer_band(interp))
+    out.append("")
     out.append("DPYD PHARMACOGENOMIC INTERPRETATION")
     out.append(
         f"Panel: {a.panel_name}"
@@ -203,6 +345,7 @@ def render(interp: Interpretation) -> str:
         ),
     ):
         out.extend(_wrap(line, "  "))
+    out.extend(_signatory_block(signatory))
     out.append(_rule())
     out.append(f"Generated {interp.generated_at.isoformat(timespec='seconds')}")
     out.append(
@@ -210,6 +353,20 @@ def render(interp: Interpretation) -> str:
         "does not drive it."
     )
     return "\n".join(out)
+
+
+def _hang(text: str, label: str) -> list[str]:
+    """Wrap ``text`` under a left-hand label, continuation lines aligned under it.
+
+    ``_wrap`` indents every line identically, which repeats the label down the
+    margin once a line wraps. The answer band is built of labelled rows, so it
+    needs the hanging form.
+    """
+    import textwrap
+
+    return textwrap.wrap(
+        text, width=_W, initial_indent=label, subsequent_indent=" " * len(label)
+    ) or [label.rstrip()]
 
 
 def _wrap(text: str, indent: str) -> list[str]:

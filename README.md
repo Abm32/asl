@@ -18,7 +18,8 @@ convention.
 ```
 pip install -e .
 asl demo                                # the worked patient case
-asl quadrant --csv fixtures/cohort_template.csv
+asl quadrant --table fixtures/cohort_template.csv
+asl interpret --genotype 'HapB3=het' --rest-negative --regimen systemic
 ```
 
 Runs entirely offline. CPIC's data is pinned in `src/asl/data/`, so a clinic
@@ -100,8 +101,38 @@ guideline publishes.
 
 ## What a report contains
 
-Run `asl demo` to see it. Six sections, each with a greppable rule ID so any line
-can be traced back to the record that produced it:
+Run `asl demo` to see it. The page opens with the answer band — the result, the
+dose in CPIC's own quoted sentence, how much of the gene was actually read, and
+how many flags qualify all three:
+
+```
+  ANSWER    DPYD Intermediate Metabolizer — REDUCED DPD activity
+            Diplotype *1/c.1236G>A   CPIC activity score 1.0 - 1.5
+
+  DOSE      CPIC, for fluorouracil: "Reduce starting dose by 50%, then
+            titrate to toxicity or therapeutic drug monitoring."
+            CPIC DPYD guideline (PMID 29152729), quoted. This is CPIC's
+            recommendation. asl does not recommend doses and has not
+            modified this one.
+
+  COVERAGE  [###.X..............]  19 DPYD loci asl can call
+            X found (1)   # read, no variant (3)   . NOT assayed (15)
+
+  READ ON   3 flags below qualify this answer. ASL-RESID-01 states what this
+            result does not exclude; it is part of the result, not an
+            appendix to it.
+```
+
+The band exists because a result nobody reads to the end has to be correct in
+its first six lines, and because the coverage strip makes the point this whole
+package argues — 4 of 19 loci read — without a paragraph. The dose is **quoted**
+from CPIC and attributed in the same breath: CDSCO classifies software by the
+voice a claim is made in, so a guideline informing a clinician and a tool
+driving a dosing decision are different device classes even when the dose is
+identical.
+
+Below the band, each section carries a greppable rule ID so any line can be
+traced back to the record that produced it:
 
 | Section | Rule ID | What it adds |
 |---|---|---|
@@ -112,6 +143,7 @@ can be traced back to the record that produced it:
 | Named conflicts | `P2_*` / `P3_*` | where the literature disagrees, **stated in both directions** |
 | Pending CPIC changes | `P4_*` | where **CPIC has announced a revision to its own value** but not published it |
 | Residual risk | `ASL-RESID-01` | regimen-matched wild-type toxicity rate + panel sensitivity + the CPIC caveat |
+| Authorisation | — | the named signatory, or an explicit **UNSIGNED** statement — never a blank line under a signature heading |
 
 ### The one flag that no automated guard can catch
 
@@ -234,8 +266,47 @@ Each is enforced by a test in `tests/test_safety_properties.py`.
 `fixtures/cohort_template.csv` is the column layout to ask for. One row per
 patient, no identifiers.
 
+`asl interpret --table` reads **CSV, TSV or XLSX** — XLSX with the standard
+library, so there is no dependency to install on a clinic machine. Column
+headers may be rsIDs, CPIC cDNA names (`c.2279C>T`), star alleles (`DPYD*2A`)
+or `HapB3`, and genotype cells may read `0/1/2`, `het`, or the words a lab
+report actually prints (`Wild type`, `Heterozygous`, `Homozygous mutant`).
+
+A cell reading **`Detected`** is refused, not read as heterozygous. It states
+that a variant is present and not how many copies, and for a no-function allele
+that is CPIC's entire recommendation: one copy is an Intermediate Metabolizer at
+50% of the starting dose, two copies is a Poor Metabolizer for whom CPIC
+contraindicates the drug. Guessing the likelier of the two would turn a
+contraindication into a dose reduction, in the one patient for whom the drug is
+lethal.
+
+For a single patient with a printed PCR report and no spreadsheet:
+
 ```
-asl quadrant --csv their_data.csv
+asl interpret --genotype 'HapB3=het' --rest-negative --regimen systemic \
+              --signatory "Dr A Nair, MD (Pathology), Reg. 12345"
+```
+
+`--rest-negative` is a flag rather than a default because it is an assertion
+that the laboratory read the panel's other loci and found nothing. Without it
+those loci are unstated and asl refuses, naming them.
+
+A blank genotype cell means **not tested**. A `0` means tested and reference.
+They are different claims and the template never conflates them, so leave a
+column blank rather than filling it with zeros the assay did not measure.
+
+The template carries three loci beyond the CPIC four that most sites will not
+be able to fill, and asks for them anyway because a column that is never
+offered is never collected:
+
+| Locus | Allele | Why it is there |
+| --- | --- | --- |
+| `rs75017182` | c.1129-5923C>G | The **causal** HapB3 variant. Without it a tag-positive result cannot be confirmed or refuted |
+| `rs112766203` | c.2279C>T | AMP Tier 1 must-test. 0.5–0.63% in Indians, 0.000% in Europeans, on no commercial panel |
+| `rs55674432` | c.2639G>T | AMP Tier 2. 0.079% in South Asians, 0.000% in Europeans |
+
+```
+asl quadrant --table their_data.csv
 ```
 
 produces the four-quadrant table — panel status × toxicity — and the cell that

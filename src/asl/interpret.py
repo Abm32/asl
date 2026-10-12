@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from anukriti_pgx_core import __version__ as ENGINE_VERSION
 from anukriti_pgx_core.calling import DPYDCaller
-from anukriti_pgx_core.phenotype.clinical_action import action_for
+from anukriti_pgx_core.phenotype.clinical_action import action_for, details_for_action
 from anukriti_pgx_core.types import Diplotype, VCFVariant
 
 from .models import AssayResult, Zygosity
@@ -42,6 +42,8 @@ PLUS_STRAND: dict[str, tuple[str, str]] = {
     "rs75017182": ("G", "C"),  # HapB3 CAUSAL c.1129-5923C>G  g.97579893G>C
     "rs56038477": ("C", "T"),  # HapB3 tag  c.1236G>A         g.97573863C>T
     "rs112766203": ("G", "A"),  # c.2279C>T g.97305279G>A
+    "rs115232898": ("T", "C"),  # c.557A>G  g.97699474T>C
+    "rs146356975": ("T", "C"),  # c.868A>G  g.97595149T>C
     "rs55674432": ("C", "A"),  # c.2639G>T  g.97098616C>A
     "rs72549304": ("G", "A"),  # c.1475C>T  g.97549609G>A
     "rs1801265": ("A", "G"),   # *9A        g.97883329A>G
@@ -68,6 +70,8 @@ CPIC_ALLELE: dict[str, str] = {
     "rs75017182": "c.1129-5923C>G",
     "rs56038477": "c.1129-5923C>G, c.1236G>A (HapB3)",
     "rs112766203": "c.2279C>T",
+    "rs115232898": "c.557A>G",
+    "rs146356975": "c.868A>G",
     "rs55674432": "c.2639G>T",
     "rs72549304": "c.1475C>T",
     "rs1801265": "c.85T>C (*9A)",
@@ -275,8 +279,9 @@ def hapb3_disclosure(basis: str) -> tuple[str, str] | None:
 
     if basis == "tag_without_causal":
         return (
-            "This decreased-function call rests on the tag SNP, and the causal "
-            "variant was tested and NOT found.",
+            ("This decreased-function call rests on the tag SNP, and the causal "
+            "variant was tested and NOT found."
+            ),
             "    CPIC requires this to be disclosed: " + _CPIC_TAG_DISCLOSURE + ".\n"
             "    In this patient the causal variant c.1129-5923C>G (rs75017182) "
             "WAS tested\n"
@@ -305,8 +310,9 @@ def hapb3_disclosure(basis: str) -> tuple[str, str] | None:
 
     # basis == "tag_only"
     return (
-        "This decreased-function call was inferred from the exonic tag SNP; the "
-        "causal variant was not tested.",
+        ("This decreased-function call was inferred from the exonic tag SNP; the "
+        "causal variant was not tested."
+        ),
         "    CPIC requires this to be disclosed: " + _CPIC_TAG_DISCLOSURE + ".\n"
         "    The causal variant c.1129-5923C>G (rs75017182) was NOT among the "
         "loci this\n"
@@ -330,6 +336,45 @@ def hapb3_disclosure(basis: str) -> tuple[str, str] | None:
         "    variant directly resolves this; it is what CPIC now recommends and "
         "what\n"
         "    some commercial DPYD panels already genotype.",
+    )
+
+
+def cpic_recommendation(phenotype: str, drug: str) -> tuple[str, str, tuple[str, ...]]:
+    """CPIC's own dosing sentence for this phenotype, with its activity range.
+
+    Returns ``(recommendation, activity_score_range, citations)`` read verbatim
+    from the engine's pinned CPIC clinical-action table.
+
+    This exists so the report can print a dose recommendation **in CPIC's
+    words**. Before it, the report's only dosing line was the closed-enum token
+    ``REDUCE_50PCT`` — correct, traceable, and not a sentence anyone can act on
+    or audit. A reader cannot check an enum against the guideline; they can
+    check "Reduce starting dose by 50%, then titrate to toxicity or therapeutic
+    drug monitoring" against PMID 29152729 in one minute.
+
+    It is also the regulatory posture. CDSCO classifies software by the voice a
+    claim is made in, not by where it sits on the page: a dose attributed to
+    CPIC and quoted from CPIC is CPIC informing the clinician, where the same
+    dose in asl's own words would be asl driving the decision. So the sentence
+    is quoted, never paraphrased, and the attribution travels with it.
+
+    Raises ``InterpretationRefused`` rather than returning an empty sentence,
+    for the same reason ``call_engine`` refuses a blank action: a report with a
+    dosing heading and nothing under it reads as "no dose change needed".
+    """
+    record = details_for_action("DPYD", phenotype, drug)
+    text = str(record.get("recommendation") or "").strip()
+    if not text:
+        raise InterpretationRefused(
+            f"the engine's CPIC clinical-action table carries no recommendation "
+            f"sentence for phenotype {phenotype!r} with {drug}. asl will not "
+            f"print a dosing section with nothing in it, nor substitute wording "
+            f"of its own for CPIC's."
+        )
+    return (
+        text,
+        str(record.get("activity_score_range") or ""),
+        tuple(str(c) for c in record.get("citations") or ()),
     )
 
 
