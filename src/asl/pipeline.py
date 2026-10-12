@@ -20,6 +20,8 @@ otherwise produce a confidently wrong report:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from . import evidence, flags, interpret, residual
 from .models import AssayResult, EvidenceRecord, Flag, Interpretation
 
@@ -153,8 +155,17 @@ def build(assay: AssayResult) -> Interpretation:
     if monitoring:
         collected.append(monitoring)
 
+    # Whether this result could have changed the first dose. Computed against
+    # the same timestamp the Interpretation carries, so the flag and the
+    # report's own "Generated" line can never disagree.
+    generated_at = datetime.now(UTC)
+    timeliness = flags.timeliness_flag(GENE, assay, generated_at)
+    if timeliness:
+        collected.append(timeliness)
+
     return Interpretation(
         assay=assay,
+        generated_at=generated_at,
         diplotype=diplotype,
         phenotype=phenotype,
         cpic_recommendation_action=action,
