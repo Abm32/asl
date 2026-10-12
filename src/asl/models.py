@@ -19,7 +19,7 @@ first may silently become the second.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 
 
@@ -193,6 +193,27 @@ class AssayResult:
     population: str | None = None  # CPIC population key, e.g. "Central/South Asian"
     drug: Drug = Drug.CAPECITABINE
     method: AssayMethod = AssayMethod.SNV_ONLY
+
+    #: The date treatment was planned to start, if the requester supplied one.
+    #:
+    #: Optional, and ``None`` is a distinct state from "it started today" —
+    #: the flag that reads this distinguishes "we know it arrived late" from
+    #: "nobody recorded when it was needed", and refuses to guess between them.
+    #:
+    #: It exists because the binding constraint on DPYD testing is not assay
+    #: turnaround. Virk 2026 (Am J Clin Pathol 166(3), PMID 42803377) states it
+    #: directly: the problem is "results returning after the first treatment
+    #: decision". In that cohort testing was ordered for 86.9% of patients and
+    #: only **44.9%** had a result before cycle 1. UPenn's prospective series
+    #: (Tuteja 2025, PMID 40773711) puts it at 57.4%, and notes that "many
+    #: clinicians did not wait for results before initiating chemotherapy".
+    #:
+    #: The Swiss SGPPT recommendation is where the field comes from: submit the
+    #: planned treatment start date with the sample, because five working days
+    #: is adequate turnaround given fluoropyrimidines are not used for
+    #: oncologic emergencies. The date is what makes "in time" a measurable
+    #: property of a report rather than an assumption about it.
+    treatment_start_date: date | None = None
 
     def __post_init__(self) -> None:
         # A repeated locus means two contradictory or redundant observations of

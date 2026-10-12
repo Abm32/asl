@@ -10,6 +10,8 @@ Two hard rules, both tested:
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from . import evidence
 from .models import AssayResult, Flag
 
@@ -381,4 +383,121 @@ def monitoring_flag(gene: str, assay: AssayResult) -> Flag | None:
             "    obligation is not discharged by this result."
         ),
         citations=(),
+    )
+
+
+def timeliness_flag(
+    gene: str, assay: AssayResult, generated_at: datetime
+) -> Flag | None:
+    """Say whether this result could have changed the first dose.
+
+    The binding constraint on DPYD testing is not assay turnaround. Virk,
+    Challa & Sadri (*Am J Clin Pathol* 2026;166(3), PMID 42803377) put it
+    plainly — the problem is "results returning after the first treatment
+    decision" — and in their cohort testing was ordered for 86.9% of patients
+    while only **44.9%** had a result before cycle 1. UPenn's prospective
+    series (Tuteja 2025, PMID 40773711) found 57.4%, and recorded that "many
+    clinicians did not wait for results before initiating chemotherapy". The
+    global PGRN survey across 28 sites in 9 countries found a median
+    turnaround of 10 days and that few sites returned more than 75% of results
+    before administration (El Rouby 2026, PMID 41456101).
+
+    A result that lands on day 8 into a decision taken on day 3 is not a
+    safety intervention. It is a post-hoc audit document, and the difference
+    matters enough that the report should say which one it is rather than
+    leave the reader to work it out from two dates printed in different
+    places.
+
+    Three states, kept distinct:
+
+    * **No date recorded** — the commonest case, and not the same as "in
+      time". The flag says the question cannot be answered and why it is
+      worth answering, because a programme that never records the date can
+      never measure the gap it most needs to close.
+    * **Result predates the planned start** — says so, with the margin, and
+      says nothing further. That is the working case and needs no advice.
+    * **Result on or after the planned start** — says the first dose was
+      decided without it, and that the result now bears on subsequent cycles
+      rather than on the first.
+
+    Deliberately does **not** tell anyone to delay treatment. Whether to wait
+    for a pending result is a clinical judgement that depends on the
+    indication and the urgency, and the Swiss SGPPT recommendation that five
+    working days is tolerable rests on fluoropyrimidines not being used for
+    oncologic emergencies — a premise this package cannot verify for any given
+    patient.
+    """
+    if gene != "DPYD":
+        return None
+
+    start = assay.treatment_start_date
+    if start is None:
+        return Flag(
+            rule_id="P9_DPYD_TIMELINESS_UNKNOWN",
+            summary=(
+                "No planned treatment start date was recorded, so whether this "
+                "result arrived in time to change the first dose cannot be "
+                "determined."
+            ),
+            detail=(
+                "    This is not the same as arriving in time.\n"
+                "    The binding constraint on DPYD testing is not assay\n"
+                "    turnaround but results returning after the first\n"
+                "    treatment decision (Virk 2026, PMID 42803377: ordered in\n"
+                "    86.9% of patients, available before cycle 1 in 44.9%).\n"
+                "    UPenn prospective: 57.4% (Tuteja 2025, PMID 40773711).\n"
+                "    A programme that does not record the planned start date\n"
+                "    cannot measure the gap it most needs to close. Capturing\n"
+                "    it with the sample is what the Swiss SGPPT recommendation\n"
+                "    asks for, and it is the only thing that makes \"in time\"\n"
+                "    a property of a report rather than an assumption."
+            ),
+            citations=("42803377", "40773711"),
+        )
+
+    generated_date = generated_at.date()
+    if generated_date < start:
+        days = (start - generated_date).days
+        return Flag(
+            rule_id="P9_DPYD_RESULT_BEFORE_TREATMENT",
+            summary=(
+                f"This result was available {days} day(s) before the planned "
+                f"treatment start ({start.isoformat()}), so it could inform "
+                f"the first dose."
+            ),
+            detail=(
+                f"    Report generated {generated_date.isoformat()}; planned\n"
+                f"    start {start.isoformat()}.\n"
+                "    Recorded because the alternative is common: only 44.9% of\n"
+                "    ordered results reached the clinician before cycle 1 in\n"
+                "    Virk 2026 (PMID 42803377), and 57.4% in Tuteja 2025\n"
+                "    (PMID 40773711)."
+            ),
+            citations=("42803377",),
+        )
+
+    late = (generated_date - start).days
+    return Flag(
+        rule_id="P9_DPYD_RESULT_AFTER_TREATMENT_START",
+        summary=(
+            f"This result was generated {late} day(s) on or after the planned "
+            f"treatment start ({start.isoformat()}). The first dose was "
+            f"decided without it."
+        ),
+        detail=(
+            f"    Report generated {generated_date.isoformat()}; planned start\n"
+            f"    {start.isoformat()}.\n"
+            "    What this changes: the CPIC recommendation above bears on\n"
+            "    subsequent cycles rather than on the first, and any toxicity\n"
+            "    already observed was observed at an unadjusted dose.\n"
+            "    This is the commonest failure mode in implementing\n"
+            "    programmes, not a rare one — the constraint is \"results\n"
+            "    returning after the first treatment decision\" rather than\n"
+            "    assay turnaround (Virk 2026, PMID 42803377).\n"
+            "    asl does not advise delaying or withholding treatment. "
+            "Whether\n"
+            "    to wait for a pending result is a clinical judgement that\n"
+            "    depends on the indication and the urgency."
+        ),
+        citations=("42803377", "40773711"),
     )

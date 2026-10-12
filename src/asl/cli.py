@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 from . import render
@@ -203,6 +205,29 @@ def _all_negative(panel: str) -> dict[str, Zygosity | None]:
     return {rsid: Zygosity.HOM_REF for rsid in PANELS[panel][1]}
 
 
+def _with_start_date(assay: AssayResult, raw: str | None) -> AssayResult:
+    """Attach the planned treatment start date, if one was supplied.
+
+    Refuses an unparseable date rather than dropping it. A silently ignored
+    date would make the report say the timeliness question could not be
+    answered when in fact it was answered and then thrown away — which is the
+    same conflation of "unknown" with "not recorded" that this package exists
+    to prevent, applied to its own input.
+    """
+    if not raw or not str(raw).strip():
+        return assay
+    try:
+        parsed = date.fromisoformat(str(raw).strip())
+    except ValueError as exc:
+        raise InterpretationRefused(
+            f"cannot read treatment start date {raw!r}. Use YYYY-MM-DD. "
+            f"asl will not ignore a date it cannot parse: the report would "
+            f"then say the timeliness of this result was unknown, when it "
+            f"was supplied and discarded."
+        ) from exc
+    return replace(assay, treatment_start_date=parsed)
+
+
 def cmd_panels(_args: argparse.Namespace) -> int:
     for key, (label, loci) in PANELS.items():
         print(f"{key:<16} {label}")
@@ -335,6 +360,7 @@ def cmd_interpret(args: argparse.Namespace) -> int:
                 args.population,
                 Drug(args.drug),
             )
+            assay = _with_start_date(assay, args.treatment_start)
             print(render(build(assay), signatory=args.signatory))
         except (InterpretationRefused, ValueError) as exc:
             print(f"REFUSED: {exc}", file=sys.stderr)
@@ -368,6 +394,9 @@ def cmd_interpret(args: argparse.Namespace) -> int:
                         or "unknown"),
                 row.get("population") or args.population,
                 Drug(_row_drug(row, args.drug)),
+            )
+            assay = _with_start_date(
+                assay, row.get("treatment_start_date") or args.treatment_start
             )
             print(render(build(assay), signatory=args.signatory))
         except (InterpretationRefused, ValueError) as exc:
@@ -515,6 +544,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
     p.add_argument("--population", default="Central/South Asian")
     p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
+    p.add_argument(
+        "--treatment-start", default=None, metavar="YYYY-MM-DD",
+        help="the date treatment is planned to start. Supplying it is what "
+             "lets the report say whether this result arrived in time to "
+             "change the first dose — only 44.9%% of ordered results did in "
+             "one US series (PMID 42803377). Omitted, the report says the "
+             "question could not be answered rather than assuming it was fine.",
+    )
     p.add_argument(
         "--signatory", default=None, metavar="NAME, QUALIFICATION, REG. NO.",
         help="the person authorising this report. Omitted, the report prints "
