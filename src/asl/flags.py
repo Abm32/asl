@@ -224,3 +224,161 @@ def haplotype_flag(gene: str, assay: AssayResult) -> Flag | None:
             phase_unknown=True,
         )
     return None
+
+
+#: Populations for which the European-derived four-variant panel is a poorer
+#: instrument. Keys are CPIC population strings; "European" is deliberately
+#: absent, and so is "Latino" — the systematic review below covers South Asian,
+#: East Asian, Middle Eastern and African ancestry toxicity cases, and silence
+#: about Latino patients is not the same as evidence of adequacy.
+_NON_EUROPEAN_POPULATIONS = frozenset(
+    {
+        "Central/South Asian",
+        "East Asian",
+        "African American/Afro-Caribbean",
+        "Sub-Saharan African",
+    }
+)
+
+#: Alleles whose absence from an assay matters most outside European ancestry.
+#: rsID -> (name, why it matters here).
+_ANCESTRY_RELEVANT_LOCI = {
+    "rs112766203": (
+        "c.2279C>T",
+        (
+            "0.63% in GenomeIndia (n=9,768) and 0.000% in Europeans; AMP/ACMG "
+            "2024 Tier 1, and absent from every commercial platform that "
+            "consensus surveyed"
+        ),
+    ),
+    "rs115232898": (
+        "c.557A>G",
+        (
+            "AMP/ACMG 2024 Tier 1; 'relatively strong evidence' in African "
+            "ancestry toxicity cases (Chan 2024) and not in the UK NHS panel"
+        ),
+    ),
+    "rs146356975": (
+        "c.868A>G",
+        "AMP/ACMG 2024 Tier 1; reported in African ancestry",
+    ),
+}
+
+
+def ancestry_panel_flag(gene: str, assay: AssayResult) -> Flag | None:
+    """Disclose that a European-derived panel is a weaker test in this patient.
+
+    The four variants that every guideline-conformant DPYD panel tests were
+    selected on European data, and the evidence that they transfer is poor.
+    Chan, Zhang & Pirmohamed (*Br J Cancer* 2024, PMID 38886557) reviewed 32
+    studies, 53 variants and five ancestry groups: **of the four, only
+    c.1905+1G>A also appears in South Asian, East Asian and Middle Eastern
+    toxicity cases.** c.557A>G has relatively strong evidence in African
+    ancestry and is not in the UK panel at all.
+
+    The NHS Race and Health Observatory said it plainly in July 2024: the
+    tested variants are "found primarily in people with White European
+    ancestry" and the programme "has the potential to worsen health and race
+    inequalities." That is a national health service describing its own
+    programme, which is why this flag quotes it rather than arguing the point
+    in our own voice.
+
+    Fires only when the assay actually failed to read one of the loci that
+    matter here. A panel that covered them has no gap to disclose, and a flag
+    that fired anyway would train a reader to skip it.
+
+    Does **not** change the phenotype, the diplotype or the CPIC action, and
+    does not recommend a different test — which assay to run is a clinical and
+    procurement decision, and recommending one would move this package from
+    informing clinical management to directing it.
+    """
+    if gene != "DPYD" or assay.population not in _NON_EUROPEAN_POPULATIONS:
+        return None
+
+    tested_rsids = {c.rsid for c in assay.tested}
+    missing = [
+        (rsid, name, why)
+        for rsid, (name, why) in _ANCESTRY_RELEVANT_LOCI.items()
+        if rsid not in tested_rsids
+    ]
+    if not missing:
+        return None
+
+    lines = "\n".join(
+        f"      {name} ({rsid}) — {why}" for rsid, name, why in missing
+    )
+    return Flag(
+        rule_id="P7_DPYD_ANCESTRY_PANEL_MISMATCH",
+        summary=(
+            f"This panel was derived from European data, and this patient's "
+            f"recorded population is {assay.population}. "
+            f"{len(missing)} allele(s) that matter in non-European ancestry "
+            f"were not assayed."
+        ),
+        detail=(
+            "    Not assayed here, and relevant in this population:\n"
+            f"{lines}\n"
+            "    Chan TH, Zhang JE, Pirmohamed M. Br J Cancer 2024 (PMID\n"
+            "    38886557), 32 studies / 53 variants / 5 ancestry groups: of\n"
+            "    the four variants a guideline-conformant panel tests, ONLY\n"
+            "    c.1905+1G>A also appears in South Asian, East Asian and\n"
+            "    Middle Eastern toxicity cases.\n"
+            "    NHS Race and Health Observatory, July 2024: the tested\n"
+            "    variants are \"found primarily in people with White European\n"
+            "    ancestry\" and the programme \"has the potential to worsen\n"
+            "    health and race inequalities.\"\n"
+            "    This does not change the CPIC call above. It states that a\n"
+            "    negative result from this panel is weaker evidence in this\n"
+            "    patient than the same result would be in a European one."
+        ),
+        citations=("38886557",),
+    )
+
+
+def monitoring_flag(gene: str, assay: AssayResult) -> Flag | None:
+    """The label's monitoring instruction, which does not depend on genotype.
+
+    Fires on every DPYD result, including — especially — the ones that look
+    clean. The FDA capecitabine label instructs withholding or discontinuing
+    "based on clinical assessment of the onset, duration, and severity of
+    adverse reactions", with no genotype condition attached, and of its own
+    variant table states: "This is not a complete listing of all DPYD variants
+    that may result in DPD deficiency."
+
+    The EMA's Direct Healthcare Professional Communication for capecitabine is
+    blunter still: "Despite negative test results for DPD deficiency, severe
+    toxicity may still occur."
+
+    This is the one flag in the package that is unconditional, and that is the
+    point. Every other disclosure here answers "what did this particular assay
+    fail to establish?" This one answers "what remains true no matter what the
+    assay found?" — and the answer is that genotype-guided dosing does not
+    replace clinical monitoring. A report whose every caveat is contingent
+    invites the reading that a sufficiently good assay would have no caveats.
+    """
+    if gene != "DPYD":
+        return None
+    return Flag(
+        rule_id="P8_DPYD_MONITORING_UNCONDITIONAL",
+        summary=(
+            "Genotype-guided dosing does not replace clinical monitoring, "
+            "whatever this result says."
+        ),
+        detail=(
+            "    FDA capecitabine label: withhold or permanently discontinue\n"
+            "    \"based on clinical assessment of the onset, duration, and\n"
+            "    severity of adverse reactions\" — stated without any genotype\n"
+            "    condition. Of its own DPYD variant table the label states:\n"
+            "    \"This is not a complete listing of all DPYD variants that may\n"
+            "    result in DPD deficiency.\"\n"
+            "    EMA Direct Healthcare Professional Communication,\n"
+            "    capecitabine: \"Despite negative test results for DPD\n"
+            "    deficiency, severe toxicity may still occur.\"\n"
+            "    NCCN Colon Cancer v5.2025: no FDA-authorised DPYD test is\n"
+            "    available, and laboratory-developed tests vary in accuracy\n"
+            "    and in which variants they detect.\n"
+            "    asl does not tell you how to monitor. It states that the\n"
+            "    obligation is not discharged by this result."
+        ),
+        citations=(),
+    )

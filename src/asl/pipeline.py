@@ -111,6 +111,13 @@ def build(assay: AssayResult) -> Interpretation:
     # negative. Emitted for every assay whose method has an undisclosed class
     # limit, found or not found -- unlike the flags above it does not depend on
     # what was detected, because the point is what could not have been.
+    # A European-derived panel is a weaker instrument outside European
+    # ancestry, and that is a property of the panel rather than of anything it
+    # found — so it is disclosed whether or not a variant was detected.
+    ancestry = flags.ancestry_panel_flag(GENE, assay)
+    if ancestry:
+        collected.append(ancestry)
+
     vclass = flags.variant_class_flag(GENE, assay)
     if vclass:
         collected.append(vclass)
@@ -119,6 +126,10 @@ def build(assay: AssayResult) -> Interpretation:
     # which locus produced the call, never inferred from the assay here: the
     # engine knows what it matched, and duplicating that logic is how the two
     # would drift apart.
+    # Unconditional, and last, so it reads as the floor under everything
+    # above it rather than as one more contingency.
+    monitoring = flags.monitoring_flag(GENE, assay)
+
     disclosure = interpret.hapb3_disclosure(hapb3_basis)
     if disclosure:
         summary, detail = disclosure
@@ -138,6 +149,9 @@ def build(assay: AssayResult) -> Interpretation:
     recommendation, score_range, cpic_citations = interpret.cpic_recommendation(
         phenotype, assay.drug.value
     )
+
+    if monitoring:
+        collected.append(monitoring)
 
     return Interpretation(
         assay=assay,
