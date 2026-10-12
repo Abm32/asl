@@ -115,8 +115,8 @@ how many flags qualify all three:
             recommendation. asl does not recommend doses and has not
             modified this one.
 
-  COVERAGE  [###.X............]  17 DPYD loci asl can call
-            X found (1)   # read, no variant (3)   . NOT assayed (13)
+  COVERAGE  [###.X..............]  19 DPYD loci asl can call
+            X found (1)   # read, no variant (3)   . NOT assayed (15)
 
   READ ON   3 flags below qualify this answer. ASL-RESID-01 states what this
             result does not exclude; it is part of the result, not an
@@ -125,7 +125,7 @@ how many flags qualify all three:
 
 The band exists because a result nobody reads to the end has to be correct in
 its first six lines, and because the coverage strip makes the point this whole
-package argues — 4 of 17 loci read — without a paragraph. The dose is **quoted**
+package argues — 4 of 19 loci read — without a paragraph. The dose is **quoted**
 from CPIC and attributed in the same breath: CDSCO classifies software by the
 voice a claim is made in, so a guideline informing a clinician and a tool
 driving a dosing decision are different device classes even when the dose is

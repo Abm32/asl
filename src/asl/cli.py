@@ -68,23 +68,27 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
     ),
     # The AMP/ACMG/CPIC/CAP/DPWG/ESPT/PharmGKB/PharmVar joint consensus (2024,
     # PMID 39032821) names seven Tier 1 "must-test" DPYD variants, not four.
-    # Two of them are not in the engine's allele table at all:
+    #
+    # This preset was `amp_tier1_sas` until 2026-10-12 and covered five of the
+    # seven, because the engine's allele table had no entry for the other two:
     #
     #   c.557A>G  (rs115232898) — 2.1% in Africans, 0.003% in South Asians
     #   c.868A>G  (rs146356975) — 0.2% in Africans, 0.000% in South Asians
     #
-    # Both are African-ancestry variants. AMP explicitly permits a laboratory
-    # to justify variant selection by the population it serves, so omitting
-    # them from a South-Asian panel is defensible — but it must be SAID, which
-    # is why this preset is not called `amp_tier1`. Serving African-ancestry
-    # patients means adding them to the engine first.
+    # Both are African-ancestry variants, and AMP explicitly permits selecting
+    # variants by the population a laboratory serves — but a panel cannot
+    # claim Tier 1 coverage while two of the seven are unreachable, so the
+    # preset carried the `_sas` qualifier to say so rather than imply coverage
+    # it did not have. anukriti-pgx-core now calls both, so the qualifier has
+    # been earned away and this is the full Tier 1 set.
     #
-    # What this preset adds over `cpic4`: the causal HapB3 variant, and
-    # c.2279C>T — Tier 1, absent from every commercial platform the consensus
-    # surveyed, 0.5-0.63% in Indians and 0.000% in Europeans.
-    "amp_tier1_sas": (
-        "AMP Tier 1 less the two African-ancestry alleles the engine lacks",
-        CPIC_ACTIONABLE + ("rs75017182", "rs112766203"),
+    # What it adds over `cpic4`: the causal HapB3 variant, c.2279C>T (Tier 1,
+    # absent from every commercial platform the consensus surveyed, 0.63% in
+    # 9,768 Indian genomes and 0.000% in Europeans), and the two above.
+    "amp_tier1": (
+        "AMP/ACMG 2024 Tier 1 must-test set — all seven variants",
+        CPIC_ACTIONABLE
+        + ("rs75017182", "rs112766203", "rs115232898", "rs146356975"),
     ),
     "full": (
         f"All {len(CPIC_ALLELE)} DPYD loci anukriti-pgx-core calls",

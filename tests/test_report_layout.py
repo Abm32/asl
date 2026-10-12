@@ -96,15 +96,15 @@ def test_the_strip_counts_found_read_and_unassayed_separately() -> None:
     Collapsing "read, no variant" and "not assayed" into a single negative is
     the defect this package exists to prevent, and the strip is the most
     compressed place it could happen. A guideline-conformant 4-variant panel
-    reads 4 of the 17 loci asl can call; the strip is where that is visible
+    reads 4 of the 19 loci asl can call; the strip is where that is visible
     without reading a paragraph.
     """
     text = _report({"rs3918290": Zygosity.HET})
     flat = " ".join(text.split())
     assert "X found (1)" in flat
     assert "# read, no variant (3)" in flat
-    assert ". NOT assayed (13)" in flat
-    assert "17 DPYD loci asl can call" in flat
+    assert ". NOT assayed (15)" in flat
+    assert "19 DPYD loci asl can call" in flat
 
 
 def test_the_strip_is_in_a_fixed_locus_order_across_patients() -> None:
@@ -116,15 +116,15 @@ def test_the_strip_is_in_a_fixed_locus_order_across_patients() -> None:
 
     a = strip(_report({"rs3918290": Zygosity.HET}))
     b = strip(_report({"rs67376798": Zygosity.HET}))
-    assert len(a) == len(b) == 17
+    assert len(a) == len(b) == 19
     assert a.index("X") != b.index("X")  # different locus, different position
 
 
 def test_a_wider_panel_shows_more_read_loci_in_the_strip() -> None:
     narrow = " ".join(_report(panel="cpic4").split())
-    wide = " ".join(_report(panel="amp_tier1_sas").split())
+    wide = " ".join(_report(panel="amp_tier1").split())
     assert "# read, no variant (4)" in narrow
-    assert "# read, no variant (6)" in wide
+    assert "# read, no variant (8)" in wide
 
 
 # ---------------------------------------------------------------------------
