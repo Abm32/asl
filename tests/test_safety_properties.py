@@ -598,13 +598,13 @@ def test_a_blank_csv_cell_is_a_no_call_not_a_negative() -> None:
     positions nobody read.
     """
     from asl.cli import _assay as cli_assay
-    from asl.cli import _row_genotypes
+    from asl.importer import row_genotypes
 
     row = {
         "rs3918290": "0", "rs55886062": "0", "rs67376798": "0", "rs56038477": "0",
         "rs1801265": "", "rs1801160": "", "rs1801159": "0", "rs2297595": "0",
     }
-    genotypes = _row_genotypes(row)
+    genotypes = row_genotypes(row)
     assert genotypes["rs1801265"] is None
     assert genotypes["rs1801160"] is None
 
@@ -676,7 +676,7 @@ def test_quadrant_excludes_no_call_patients_rather_than_calling_them_negative(
 
     buf = io.StringIO()
     with redirect_stdout(buf):
-        cmd_quadrant(argparse.Namespace(csv=str(path), panel="cpic4"))
+        cmd_quadrant(argparse.Namespace(table=str(path), panel="cpic4"))
     out = buf.getvalue()
 
     assert "n = 1 patients" in out
@@ -1007,10 +1007,14 @@ def test_the_shipped_template_interprets_on_the_default_panel() -> None:
     with redirect_stdout(buf):
         cmd_interpret(
             argparse.Namespace(
-                csv=str(_template_path()),
+                table=str(_template_path()),
+                genotype=None,
+                rest_negative=False,
+                regimen="unknown",
                 panel="cpic4",
                 population="Central/South Asian",
                 drug="capecitabine",
+                signatory=None,
             )
         )
     out = buf.getvalue()
@@ -1039,10 +1043,14 @@ def test_a_real_off_panel_genotype_is_still_refused(tmp_path) -> None:
     with redirect_stdout(buf):
         cmd_interpret(
             argparse.Namespace(
-                csv=str(path),
+                table=str(path),
+                genotype=None,
+                rest_negative=False,
+                regimen="unknown",
                 panel="cpic4",
                 population="Central/South Asian",
                 drug="capecitabine",
+                signatory=None,
             )
         )
     out = buf.getvalue()
@@ -1066,10 +1074,14 @@ def test_the_template_drug_column_is_read_not_defaulted() -> None:
     with redirect_stdout(buf):
         cmd_interpret(
             argparse.Namespace(
-                csv=str(_template_path()),
+                table=str(_template_path()),
+                genotype=None,
+                rest_negative=False,
+                regimen="unknown",
                 panel="cpic4",
                 population="Central/South Asian",
                 drug="capecitabine",
+                signatory=None,
             )
         )
     out = buf.getvalue()

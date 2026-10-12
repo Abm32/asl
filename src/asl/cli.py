@@ -1,13 +1,18 @@
 """Command line interface.
 
 Designed for a clinic room: no network, no database, no configuration. Reads a
-CSV or a few flags, prints a report.
+table or a few flags, prints a report.
 
-    asl demo                          # the walkthrough patient
-    asl demo --panel cpic4            # panel-negative on the CPIC four
-    asl interpret --csv patients.csv   # a batch from a spreadsheet
-    asl panels                        # what panel presets exist
-    asl quadrant --csv patients.csv    # the four-quadrant table for a cohort
+    asl demo                               # the walkthrough patient
+    asl demo --panel cpic4                 # panel-negative on the CPIC four
+    asl interpret --table patients.xlsx    # a batch from the lab's spreadsheet
+    asl interpret --genotype 'HapB3=het' --rest-negative   # one typed patient
+    asl panels                             # what panel presets exist
+    asl quadrant --table patients.csv      # the four-quadrant table for a cohort
+
+``interpret`` takes CSV, TSV or XLSX, and column headers may be rsIDs, CPIC
+cDNA names, star alleles or ``HapB3`` — see ``asl.importer``, which also
+refuses a cell reading "Detected" rather than reading it as heterozygous.
 
 ``quadrant`` is the one to run against a partner site's spreadsheet: it answers
 "how many patients had grade 3+ toxicity while negative on every panel variant?"
@@ -17,11 +22,18 @@ which is the question a retrospective exists to settle.
 from __future__ import annotations
 
 import argparse
-import csv
 import sys
 from pathlib import Path
 
 from . import render
+from .importer import (
+    LOCUS_SYNONYM,
+    ImportRefused,
+    locus_key,
+    read_rows,
+    read_zygosity,
+    row_genotypes,
+)
 from .interpret import CPIC_ACTIONABLE, CPIC_ALLELE, InterpretationRefused
 from .models import (
     AssayMethod,
@@ -79,13 +91,6 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
         tuple(CPIC_ALLELE.keys()),
     ),
 }
-
-_ZYG = {
-    "0": Zygosity.HOM_REF, "hom_ref": Zygosity.HOM_REF, "wt": Zygosity.HOM_REF,
-    "1": Zygosity.HET, "het": Zygosity.HET,
-    "2": Zygosity.HOM_VAR, "hom_var": Zygosity.HOM_VAR, "hom": Zygosity.HOM_VAR,
-}
-
 
 def _assay(
     panel: str,
@@ -241,37 +246,57 @@ def cmd_demo(args: argparse.Namespace) -> int:
             pop,
             drug,
         )
-    print(render(build(assay)))
+    print(render(build(assay), signatory=args.signatory))
     return 0
 
 
-def _row_genotypes(row: dict[str, str]) -> dict[str, Zygosity | None]:
-    """Read the rsID columns of one CSV row.
+def _typed_genotypes(
+    panel: str, pairs: list[str], rest_negative: bool
+) -> dict[str, Zygosity | None]:
+    """Build a genotype map from ``--genotype LOCUS=ZYGOSITY`` flags.
 
-    A column that is present but blank maps to ``None`` — the assay covered the
-    locus and returned no call — which ``_assay`` renders as NOT_TESTED. A column
-    that is absent entirely is not in the returned map at all, and ``_assay``
-    refuses if the chosen panel covers it. Blank and absent are different facts
-    and are kept different.
+    The input path for a clinician holding one printed PCR report and no
+    spreadsheet. ``LOCUS`` is anything ``importer`` recognises — an rsID, a CPIC
+    cDNA name, a star allele, ``HapB3``.
+
+    ``rest_negative`` is required to say anything about the loci not named, and
+    it is a flag rather than a default on purpose: it is an assertion that the
+    laboratory read those loci and found nothing, which is a claim about the
+    report in the clinician's hand. Without it the unnamed loci are simply not
+    in the map, and ``_assay`` refuses and names them — which is the correct
+    outcome, because "I only typed the positive ones" and "the rest were
+    negative" are different statements and only the second supports a panel
+    attribution.
     """
-    out: dict[str, Zygosity | None] = {}
-    for key, value in row.items():
-        k = (key or "").strip()
-        if k not in CPIC_ALLELE:
-            continue
-        raw = (value or "").strip()
-        if not raw:
-            out[k] = None
-            continue
-        z = _ZYG.get(raw.lower())
-        if z is None:
-            raise ValueError(
-                f"{k}: cannot read genotype {value!r}. Use 0/1/2, "
-                f"hom_ref/het/hom_var, or wt/het/hom. Leave the cell blank "
-                f"only if the assay returned no call at this locus."
+    loci = PANELS[panel][1]
+    out: dict[str, Zygosity | None] = (
+        {rsid: Zygosity.HOM_REF for rsid in loci} if rest_negative else {}
+    )
+    for pair in pairs:
+        name, sep, value = pair.partition("=")
+        if not sep:
+            raise ImportRefused(
+                f"--genotype {pair!r}: expected LOCUS=ZYGOSITY, for example "
+                f"--genotype 'HapB3=het' or --genotype rs3918290=1."
             )
-        out[k] = z
+        rsid = LOCUS_SYNONYM.get(locus_key(name))
+        if rsid is None:
+            raise ImportRefused(
+                f"--genotype {pair!r}: {name.strip()!r} is not a DPYD locus "
+                f"asl knows. Use an rsID, a CPIC cDNA name (c.1905+1G>A), a "
+                f"star allele (*2A) or HapB3. `asl panels` lists them."
+            )
+        zyg = read_zygosity(value, CPIC_ALLELE[rsid])
+        if zyg is None:
+            raise ImportRefused(
+                f"--genotype {pair!r}: no zygosity given. A locus typed on the "
+                f"command line was looked at; to record one that was not, omit "
+                f"it and do not pass --rest-negative."
+            )
+        out[rsid] = zyg
     return out
+
+
 
 
 def _row_drug(row: dict[str, str], default: str) -> str:
@@ -291,8 +316,40 @@ def _row_drug(row: dict[str, str], default: str) -> str:
 
 
 def cmd_interpret(args: argparse.Namespace) -> int:
-    path = Path(args.csv)
-    rows = list(csv.DictReader(path.open()))
+    """Interpret a table of patients, or one patient typed on the command line.
+
+    A refusal on one row prints and the batch continues. A site's spreadsheet
+    will have a bad cell in it, and aborting the run would hide the 200 rows
+    that were fine behind the one that was not — while still refusing the one.
+    """
+    if args.genotype is not None:
+        try:
+            assay = _assay(
+                args.panel,
+                _typed_genotypes(args.panel, args.genotype, args.rest_negative),
+                Regimen(args.regimen),
+                args.population,
+                Drug(args.drug),
+            )
+            print(render(build(assay), signatory=args.signatory))
+        except (InterpretationRefused, ValueError) as exc:
+            print(f"REFUSED: {exc}", file=sys.stderr)
+            if not args.rest_negative and "does cover" in str(exc):
+                # The refusal is written for a spreadsheet, where the fix is a
+                # column. Typed on the command line the fix is a flag, and a
+                # clinician who has only the positive loci in front of them has
+                # no way to guess that from the message above.
+                print(
+                    "\n  If the laboratory read those loci and found nothing, "
+                    "say so with\n  --rest-negative. Do not pass it if they "
+                    "were never assayed.",
+                    file=sys.stderr,
+                )
+            return 1
+        return 0
+
+    path = Path(args.table)
+    rows = read_rows(path)
     if not rows:
         print(f"{path}: no rows", file=sys.stderr)
         return 1
@@ -302,12 +359,13 @@ def cmd_interpret(args: argparse.Namespace) -> int:
         try:
             assay = _assay(
                 args.panel,
-                _row_genotypes(row),
-                Regimen(row.get("regimen", "unknown").strip().lower() or "unknown"),
+                row_genotypes(row),
+                Regimen((row.get("regimen") or "unknown").strip().lower()
+                        or "unknown"),
                 row.get("population") or args.population,
                 Drug(_row_drug(row, args.drug)),
             )
-            print(render(build(assay)))
+            print(render(build(assay), signatory=args.signatory))
         except (InterpretationRefused, ValueError) as exc:
             print(f"REFUSED: {exc}")
     return 0
@@ -324,8 +382,7 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     as negative. Counting them as negative would inflate exactly the cell the
     analysis turns on, and in the direction that flatters our own thesis.
     """
-    path = Path(args.csv)
-    rows = list(csv.DictReader(path.open()))
+    rows = read_rows(args.table)
     _, loci = PANELS[args.panel]
 
     # A spreadsheet can list the same patient twice — a corrected row appended
@@ -348,7 +405,7 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     missing = 0
     incomplete = 0
     for row in rows:
-        g = _row_genotypes(row)
+        g = row_genotypes(row)
         unread = [r for r in loci if g.get(r) is None]
         if unread:
             incomplete += 1
@@ -423,20 +480,47 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
+    p.add_argument("--signatory", default=None)
     p.set_defaults(func=cmd_demo)
 
     p = sub.add_parser("panels", help="list panel presets")
     p.set_defaults(func=cmd_panels)
 
-    p = sub.add_parser("interpret", help="interpret a CSV of patients")
-    p.add_argument("--csv", required=True)
+    p = sub.add_parser(
+        "interpret", help="interpret a table of patients, or one typed patient"
+    )
+    src = p.add_mutually_exclusive_group(required=True)
+    src.add_argument(
+        "--table", "--csv", dest="table",
+        help="CSV, TSV or XLSX. Column headers may be rsIDs, CPIC cDNA names, "
+             "star alleles or HapB3; a blank cell is NOT_TESTED, not a negative.",
+    )
+    src.add_argument(
+        "--genotype", action="append", metavar="LOCUS=ZYGOSITY",
+        help="one patient typed directly, repeatable: --genotype 'HapB3=het'. "
+             "Pair with --rest-negative to assert the panel's other loci were "
+             "read and were negative.",
+    )
+    p.add_argument(
+        "--rest-negative", action="store_true",
+        help="the panel loci not named by --genotype were tested and negative. "
+             "Without this they are unstated and asl refuses rather than "
+             "assuming a negative.",
+    )
+    p.add_argument("--regimen", default="unknown", choices=[r.value for r in Regimen])
     p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
     p.add_argument("--population", default="Central/South Asian")
     p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
+    p.add_argument(
+        "--signatory", default=None, metavar="NAME, QUALIFICATION, REG. NO.",
+        help="the person authorising this report. Omitted, the report prints "
+             "an explicit UNSIGNED block; it never prints a blank signature "
+             "line that looks signed.",
+    )
     p.set_defaults(func=cmd_interpret)
 
-    p = sub.add_parser("quadrant", help="four-quadrant table for a cohort CSV")
-    p.add_argument("--csv", required=True)
+    p = sub.add_parser("quadrant", help="four-quadrant table for a cohort table")
+    p.add_argument("--table", "--csv", dest="table", required=True)
     p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
     p.set_defaults(func=cmd_quadrant)
 

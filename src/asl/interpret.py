@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from anukriti_pgx_core import __version__ as ENGINE_VERSION
 from anukriti_pgx_core.calling import DPYDCaller
-from anukriti_pgx_core.phenotype.clinical_action import action_for
+from anukriti_pgx_core.phenotype.clinical_action import action_for, details_for_action
 from anukriti_pgx_core.types import Diplotype, VCFVariant
 
 from .models import AssayResult, Zygosity
@@ -332,6 +332,45 @@ def hapb3_disclosure(basis: str) -> tuple[str, str] | None:
         "    variant directly resolves this; it is what CPIC now recommends and "
         "what\n"
         "    some commercial DPYD panels already genotype.",
+    )
+
+
+def cpic_recommendation(phenotype: str, drug: str) -> tuple[str, str, tuple[str, ...]]:
+    """CPIC's own dosing sentence for this phenotype, with its activity range.
+
+    Returns ``(recommendation, activity_score_range, citations)`` read verbatim
+    from the engine's pinned CPIC clinical-action table.
+
+    This exists so the report can print a dose recommendation **in CPIC's
+    words**. Before it, the report's only dosing line was the closed-enum token
+    ``REDUCE_50PCT`` — correct, traceable, and not a sentence anyone can act on
+    or audit. A reader cannot check an enum against the guideline; they can
+    check "Reduce starting dose by 50%, then titrate to toxicity or therapeutic
+    drug monitoring" against PMID 29152729 in one minute.
+
+    It is also the regulatory posture. CDSCO classifies software by the voice a
+    claim is made in, not by where it sits on the page: a dose attributed to
+    CPIC and quoted from CPIC is CPIC informing the clinician, where the same
+    dose in asl's own words would be asl driving the decision. So the sentence
+    is quoted, never paraphrased, and the attribution travels with it.
+
+    Raises ``InterpretationRefused`` rather than returning an empty sentence,
+    for the same reason ``call_engine`` refuses a blank action: a report with a
+    dosing heading and nothing under it reads as "no dose change needed".
+    """
+    record = details_for_action("DPYD", phenotype, drug)
+    text = str(record.get("recommendation") or "").strip()
+    if not text:
+        raise InterpretationRefused(
+            f"the engine's CPIC clinical-action table carries no recommendation "
+            f"sentence for phenotype {phenotype!r} with {drug}. asl will not "
+            f"print a dosing section with nothing in it, nor substitute wording "
+            f"of its own for CPIC's."
+        )
+    return (
+        text,
+        str(record.get("activity_score_range") or ""),
+        tuple(str(c) for c in record.get("citations") or ()),
     )
 
 

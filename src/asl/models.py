@@ -320,6 +320,16 @@ class Interpretation:
                            # pgx-core 0.9.0; asl never computes it. Drives
                            # CPIC's mandated tag-SNP disclosure and NEVER
                            # changes the phenotype or the clinical action.
+    # CPIC's own dosing sentence for this phenotype and drug, quoted verbatim
+    # from the engine's pinned clinical-action table, with the activity-score
+    # range it applies to and CPIC's citation. The report prints this instead of
+    # paraphrasing, because an attributed quotation is CPIC informing the
+    # clinician while the same dose in asl's words would be asl driving the
+    # decision — which is a different regulatory class, not a style preference.
+    cpic_recommendation_text: str = ""
+    cpic_activity_score_range: str = ""
+    cpic_citations: tuple[str, ...] = ()
+
     engine_version: str = ""
     generated_at: datetime = field(
         default_factory=lambda: datetime.now(UTC)
