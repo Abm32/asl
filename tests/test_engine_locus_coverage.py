@@ -95,3 +95,23 @@ def test_plus_strand_pairs_are_distinct_single_bases(
     ref, alt = pair
     assert ref in "ACGT" and alt in "ACGT", f"{rsid}: not a single base"
     assert ref != alt, f"{rsid}: REF equals ALT"
+
+
+def test_every_locus_has_a_grch38_position():
+    """A position per locus, as data rather than a comment.
+
+    The generator in synthetic_genomes matches 1000 Genomes records by
+    position and REF/ALT, because the GRCh37 phase 3 release carries an empty
+    ID column and rsID matching silently finds nothing. asl stays the source
+    of truth for where each locus is.
+    """
+    from asl.interpret import GRCH38_POS, PLUS_STRAND
+
+    assert set(GRCH38_POS) == set(PLUS_STRAND)
+    # DPYD spans roughly chr1:97.08-97.89 Mb on GRCh38.
+    for rsid, pos in GRCH38_POS.items():
+        assert isinstance(pos, int), rsid
+        assert 97_070_000 < pos < 97_890_000, (rsid, pos)
+    # Positions are unique: two loci at one coordinate would make the
+    # position-plus-alleles match ambiguous.
+    assert len(set(GRCH38_POS.values())) == len(GRCH38_POS)
