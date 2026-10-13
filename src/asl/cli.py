@@ -132,8 +132,9 @@ def _assay(
     genotype and widens no panel. Refusing it made
     ``fixtures/cohort_template.csv`` — the layout this package asks sites to fill
     in — refuse every row under the default panel, because the template carries
-    the four South Asian columns for sites that can fill them and leaves them
-    blank for sites that cannot.
+    a column for every locus the engine calls — all 32 of them since the panel
+    was widened, not the four South Asian additions it carried before — for
+    sites that can fill them, and leaves blank the ones a site cannot.
     """
     label, loci = PANELS[panel]
     off_panel = sorted(r for r in set(genotypes) - set(loci) if genotypes[r] is not None)
@@ -451,6 +452,17 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
         cells[(positive, int(grade) >= 3)] += 1
 
     n = sum(cells.values())
+    # Synthetic cohorts carry a SYNTH- prefix on every identifier. When the
+    # whole table is synthetic, say so ABOVE the table: the panel-negative
+    # toxicity rate below is printed inches from two real published
+    # comparators, and a screenshot of that pair with nothing between them
+    # reads as a finding.
+    if deduped and all(pid.startswith("SYNTH-") for pid in deduped):
+        print(
+            "*** SYNTHETIC DATA — every identifier is SYNTH-. These counts are "
+            "generated, not observed, and are not evidence about any "
+            "population or panel. ***"
+        )
     print(f"Four-quadrant table — panel: {PANELS[args.panel][0]}")
     print(f"n = {n} patients with a readable toxicity grade"
           + (f" ({missing} skipped, grade not recorded)" if missing else ""))
