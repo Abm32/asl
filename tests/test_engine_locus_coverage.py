@@ -115,3 +115,7 @@ def test_every_locus_has_a_grch38_position():
     # Positions are unique: two loci at one coordinate would make the
     # position-plus-alleles match ambiguous.
     assert len(set(GRCH38_POS.values())) == len(GRCH38_POS)
+    # GRCh38, not GRCh37: rs3918290 is at 97,450,058 on GRCh38 and
+    # 97,915,614 on GRCh37. Confirmed by position-matching against the 1000
+    # Genomes GRCh38 high-coverage panel, where the REF/ALT also agree.
+    assert GRCH38_POS["rs3918290"] == 97_450_058

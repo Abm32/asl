@@ -27,7 +27,9 @@ from anukriti_pgx_core.types import Diplotype, VCFVariant
 from .models import AssayResult, Zygosity
 
 # Plus-strand genomic REF/ALT per rsID, from CPIC
-# sequence_location.chromosomelocation (g.<pos><REF>><ALT>, GRCh37).
+# sequence_location.chromosomelocation (g.<pos><REF>><ALT>, GRCh38; verified by
+# position-matching against the 1000 Genomes GRCh38 high-coverage panel, e.g.
+# rs3918290 is chr1:97450058 on GRCh38 but 97915614 on GRCh37).
 #
 # This is the same convention pgx-core 0.7.2+ uses in its allele table and the
 # same convention a VCF and a dbSNP-forward assay report use, so the letters
