@@ -5,3 +5,5 @@ __pycache__/
 .ruff_cache/
 *.pyc
 ledger*.jsonl
+build/
+dist/
