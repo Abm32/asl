@@ -15,6 +15,7 @@ from __future__ import annotations
 import pytest
 
 from asl.cli import _all_negative, _assay
+from asl.interpret import CPIC_ALLELE
 from asl.models import Drug, Regimen, Zygosity
 from asl.pipeline import build
 from asl.report import render
@@ -96,15 +97,21 @@ def test_the_strip_counts_found_read_and_unassayed_separately() -> None:
     Collapsing "read, no variant" and "not assayed" into a single negative is
     the defect this package exists to prevent, and the strip is the most
     compressed place it could happen. A guideline-conformant 4-variant panel
-    reads 4 of the 19 loci asl can call; the strip is where that is visible
+    reads 4 of the loci asl can call; the strip is where that is visible
     without reading a paragraph.
+
+    The totals are derived from ``CPIC_ALLELE`` rather than written in, because
+    that table grows whenever the engine's allele table does -- it went 19 -> 32
+    with ``pgx-core`` 0.11.0. A hardcoded total turns every such widening into a
+    test failure that says nothing about the three-state invariant under test.
     """
+    total = len(CPIC_ALLELE)
     text = _report({"rs3918290": Zygosity.HET})
     flat = " ".join(text.split())
     assert "X found (1)" in flat
     assert "# read, no variant (3)" in flat
-    assert ". NOT assayed (15)" in flat
-    assert "19 DPYD loci asl can call" in flat
+    assert f". NOT assayed ({total - 4})" in flat
+    assert f"{total} DPYD loci asl can call" in flat
 
 
 def test_the_strip_is_in_a_fixed_locus_order_across_patients() -> None:
@@ -116,7 +123,7 @@ def test_the_strip_is_in_a_fixed_locus_order_across_patients() -> None:
 
     a = strip(_report({"rs3918290": Zygosity.HET}))
     b = strip(_report({"rs67376798": Zygosity.HET}))
-    assert len(a) == len(b) == 19
+    assert len(a) == len(b) == len(CPIC_ALLELE)
     assert a.index("X") != b.index("X")  # different locus, different position
 
 

@@ -55,6 +55,31 @@ PLUS_STRAND: dict[str, tuple[str, str]] = {
     "rs1801268": ("C", "A"),   # *10        g.97079071C>A
     "rs78060119": ("C", "A"),  # *12        g.97573943C>A
     "rs55971861": ("T", "G"),  # c.1906A>C  g.97382461T>G
+    # The remaining loci the engine calls. Added 2026-10-13: pgx-core 0.11.0
+    # widened its allele table to 33 alleles across 32 sites, and until this
+    # block existed `asl` pinned only the 19 above — so the other 13 could not
+    # be named in a panel preset and were reachable only if a VCF happened to
+    # supply them. Part of the engine's coverage was therefore not orderable
+    # through the product.
+    #
+    # All thirteen are No function except c.1314T>G (Decreased function). Each
+    # REF/ALT pair below was read from CPIC `sequence_location.chromosomelocation`
+    # and re-verified against the live api.cpicpgx.org on 2026-10-13; the same
+    # derivation reproduces all 19 pairs above unchanged, which is what makes
+    # the new ones trustworthy rather than merely plausible.
+    "rs72549310": ("G", "A"),   # c.61C>T    g.97883353G>A
+    "rs72549308": ("T", "G"),   # c.601A>C   g.97699430T>G
+    "rs72549307": ("T", "C"),   # c.632A>G   g.97699399T>C
+    "rs183385770": ("C", "T"),  # c.1024G>A  g.97593322C>T
+    "rs143154602": ("G", "A"),  # c.1057C>T  g.97593289G>A
+    "rs186169810": ("A", "C"),  # c.1314T>G  g.97573785A>C
+    "rs111858276": ("T", "C"),  # c.1484A>G  g.97549600T>C
+    "rs59086055": ("G", "A"),   # c.1774C>T  g.97450190G>A
+    "rs138616379": ("C", "T"),  # c.1775G>A  g.97450189C>T
+    "rs145773863": ("C", "T"),  # c.1777G>A  g.97450187C>T
+    "rs137999090": ("C", "T"),  # c.2021G>A  g.97373598C>T
+    "rs141044036": ("T", "C"),  # c.2872A>G  g.97082365T>C
+    "rs72547601": ("T", "C"),   # c.2933A>G  g.97079121T>C
 }
 
 # rsID -> CPIC allele name, for evidence lookup.
@@ -83,6 +108,27 @@ CPIC_ALLELE: dict[str, str] = {
     "rs1801268": "c.2983G>T (*10)",
     "rs78060119": "c.1156G>T (*12)",
     "rs55971861": "c.1906A>C",
+    # Same thirteen as the tail of PLUS_STRAND, in the same order. Every name
+    # below is a key in the pinned CPIC evidence table, so each carries
+    # citations and a function assignment; a name that was not would make
+    # `evidence` refuse rather than report an untraceable claim.
+    #
+    # This dict's iteration order is the report's coverage-strip order, so the
+    # thirteen are appended rather than interleaved: a locus keeps the column
+    # it had before the widening.
+    "rs72549310": "c.61C>T",
+    "rs72549308": "c.601A>C",
+    "rs72549307": "c.632A>G",
+    "rs183385770": "c.1024G>A",
+    "rs143154602": "c.1057C>T",
+    "rs186169810": "c.1314T>G",
+    "rs111858276": "c.1484A>G",
+    "rs59086055": "c.1774C>T",
+    "rs138616379": "c.1775G>A",
+    "rs145773863": "c.1777G>A",
+    "rs137999090": "c.2021G>A",
+    "rs141044036": "c.2872A>G",
+    "rs72547601": "c.2933A>G",
 }
 
 # The four variants CPIC's guideline makes actionable. A guideline-conformant
