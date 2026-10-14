@@ -57,7 +57,7 @@ out/             worked outputs, regenerated on release
 fixtures/        the CSV column layout to ask a site for
 ```
 
-Sole dependency: `anukriti-pgx-core==0.9.0`, pinned exactly — a new engine
+Sole dependency: `anukriti-pgx-core==0.11.0`, pinned exactly — a new engine
 version carries CPIC table updates that need clinical regression review first.
 
 ---
@@ -195,7 +195,7 @@ negatives. Both are the same defect — one number doing two jobs.
 ```
 CPIC live API ──(scripts/regen_evidence_tables.py --check, gated in CI)──┐
                                                                         ▼
-anukriti-pgx-core ==0.9.0 ──▶ interpret ──▶ pipeline ──▶ report    src/asl/data/
+anukriti-pgx-core==0.11.0 ──▶ interpret ──▶ pipeline ──▶ report    src/asl/data/
    (CPIC truth, decides)         │            │                      (pinned, offline)
                                  │            ├── evidence  (provenance per allele)
                                  │            ├── flags     (named conflicts)
