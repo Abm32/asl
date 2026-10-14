@@ -54,6 +54,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from .residual import actionable_loci
+
 # Field names that must never appear in a ledger entry. Checked on keys, so a
 # site pasting a spreadsheet column called "patient_name" fails loudly.
 _PHI_FIELDS = frozenset({
@@ -467,6 +469,9 @@ def quadrant(
         "excluded_unreadable_genotype": 0,
         "duplicates_superseded": superseded,
     }
+    # Computed once: the lookup reads the pinned CPIC table per locus.
+    deciding = set(actionable_loci("DPYD", panel_rsids))
+
     for e in entries:
         tested = set(e.get("rsids_tested") or [])
         if not set(panel_rsids).issubset(tested):
@@ -477,7 +482,15 @@ def quadrant(
         if any(t not in _READABLE_TOKENS for t in tokens):
             cells["excluded_unreadable_genotype"] += 1
             continue
-        positive = any(t in VARIANT_TOKENS for t in tokens)
+        # Only an actionable locus decides the split. A call at a locus CPIC
+        # calls normal function leaves the patient in the group the published
+        # comparators describe, so counting it as positive would move the most
+        # common carriers out of the denominator those rates are compared to.
+        positive = any(
+            t in VARIANT_TOKENS
+            for r, t in zip(panel_rsids, tokens, strict=True)
+            if r in deciding
+        )
         toxic = int(e.get("max_toxicity_grade") or 0) >= 3
         key = f"{'positive' if positive else 'negative'}_{'toxic' if toxic else 'not_toxic'}"
         cells[key] += 1

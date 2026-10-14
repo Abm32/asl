@@ -47,6 +47,7 @@ from .models import (
     Zygosity,
 )
 from .pipeline import build
+from .residual import actionable_loci
 
 # Panel presets. A panel is a *list of loci*, and choosing one is choosing what
 # the report may conclude — so presets are named and explicit rather than
@@ -418,6 +419,10 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     """
     rows = read_rows(args.table)
     _, loci = PANELS[args.panel]
+    # The published rates printed under this table define their comparison
+    # group by the absence of an ACTIONABLE variant, so the table has to split
+    # on the same thing or it contradicts its own comparator.
+    deciding = actionable_loci("DPYD", loci)
 
     # A spreadsheet can list the same patient twice — a corrected row appended
     # below the original is how a site actually edits a CSV. Counting both would
@@ -440,11 +445,15 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     incomplete = 0
     for row in rows:
         g = row_genotypes(row)
-        unread = [r for r in loci if g.get(r) is None]
+        # Only the actionable loci decide the split, and only they can make a
+        # patient incomplete. A locus CPIC calls normal function cannot move
+        # anyone across the line the table draws, so a call there must not
+        # count as positive and a no-call there must not discard the patient.
+        unread = [r for r in deciding if g.get(r) is None]
         if unread:
             incomplete += 1
             continue
-        positive = any(g[r] is not Zygosity.HOM_REF for r in loci)
+        positive = any(g[r] is not Zygosity.HOM_REF for r in deciding)
         grade = (row.get("max_toxicity_grade") or "").strip()
         if not grade.isdigit():
             missing += 1
