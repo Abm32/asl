@@ -57,8 +57,30 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
         "CPIC 4-variant DPYD panel (reaches HapB3 via the tag SNP)",
         CPIC_ACTIONABLE,
     ),
+    # These four add no actionable coverage, and the label said otherwise
+    # until 2026-10-14. CPIC calls all four normal function; the DPWG calls
+    # them "fully functional" and leaves them out of its gene activity score;
+    # the EMA names no variants at all; the FDA names no DPYD alleles; ClinVar
+    # germline consensus is benign. Nothing recommends a dose change on any of
+    # them.
+    #
+    # "Common in South Asians" was also false for three of the four. In
+    # gnomAD v4, confirmed against 1000 Genomes: *9A is African-enriched
+    # (AFR 0.41 > SAS 0.25 ~ NFE 0.22); *5 is LOWEST in South Asians of the
+    # major populations (SAS 0.096 against EAS 0.27, AMR 0.29, NFE 0.20); and
+    # c.496A>G is level with Europeans (SAS 0.090, NFE 0.093). Only *6 is
+    # genuinely South Asian-enriched, at roughly twice the European frequency.
+    #
+    # They are still worth reporting, for two reasons that are not clinical:
+    # naming a diplotype correctly needs the star alleles that define it, and
+    # *6 carries a consistent modest toxicity signal in meta-analysis
+    # (OR 1.70, 33 studies, 17,485 patients, PMID 42727832) that is a research
+    # marker, not a dose input -- those same authors found it added nothing to
+    # haplotype-based risk stratification. For actual South Asian coverage use
+    # `amp_tier1`, which carries c.2279C>T.
     "cpic4_plus_sas": (
-        "CPIC 4-variant panel + 4 alleles common in South Asians",
+        "CPIC 4-variant panel + 4 star alleles CPIC and the DPWG both call "
+        "normal function (no added actionable coverage)",
         CPIC_ACTIONABLE + ("rs1801265", "rs1801160", "rs1801159", "rs2297595"),
     ),
     # The same four actionable variants, but reaching HapB3 through the CAUSAL

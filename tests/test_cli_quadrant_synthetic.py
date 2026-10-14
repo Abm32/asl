@@ -118,3 +118,43 @@ def test_a_no_call_at_a_normal_function_locus_does_not_exclude(tmp_path, capsys)
     out = capsys.readouterr().out
     assert "n = 2 patients" in out
     assert "panel NEGATIVE                   1           1" in out
+
+
+def test_no_panel_label_sells_normal_function_loci_as_population_coverage():
+    """The label is what the report attributes its conclusions to, and it is
+    printed inside the sentence naming what was NOT assayed. A preset whose
+    extra loci are all CPIC normal function must not describe them in terms a
+    reader takes for wider coverage for their population.
+
+    `cpic4_plus_sas` said "+ 4 alleles common in South Asians" until
+    2026-10-14. Both halves were wrong: the four add no actionable coverage,
+    and three of them are not South Asian-enriched (*9A is African-enriched,
+    *5 is lowest in South Asians, c.496A>G is level with Europeans).
+
+    `full` is deliberately exempt from the population clause: "All 32 DPYD
+    loci" is a count, true as written, and claims nothing about ancestry.
+    """
+    from asl.residual import actionable_loci
+
+    population_words = ("south asian", "indian", "common in", "ancestry")
+    for key, (label, loci) in PANELS.items():
+        if len(actionable_loci("DPYD", loci)) == len(loci):
+            continue  # every locus can change a dose; nothing to disclaim
+        lowered = label.lower()
+        if any(w in lowered for w in population_words):
+            assert "no added actionable coverage" in lowered, (
+                f"panel {key!r} describes non-actionable loci in population "
+                f"terms without saying they add no coverage: {label!r}"
+            )
+
+
+def test_the_sas_preset_label_states_it_adds_no_actionable_coverage():
+    label, loci = PANELS["cpic4_plus_sas"]
+    from asl.residual import actionable_loci
+
+    assert len(actionable_loci("DPYD", loci)) == 4, (
+        "the four extras must still be the CPIC-normal ones; if a later edit "
+        "repoints this preset at actionable loci, rewrite the label too"
+    )
+    assert "no added actionable coverage" in label
+    assert "common in South Asians" not in label
