@@ -1,9 +1,9 @@
-anonymised_id,cancer_type,fluoropyrimidine_drug,regimen,treatment_start_date,population,rs3918290,rs55886062,rs67376798,rs56038477,rs75017182,rs112766203,rs55674432,rs115232898,rs146356975,rs1801265,rs1801160,rs1801159,rs2297595,max_toxicity_grade,toxicity_type,starting_dose_mg_m2,cycles_received
-MCC-001,colorectal,capecitabine,systemic,,Central/South Asian,0,0,0,0,,,,,,,,,,3,diarrhoea,1000,6
-MCC-002,colorectal,capecitabine,systemic,,Central/South Asian,0,0,0,1,,,,,,,,,,3,mucositis,1000,4
-MCC-003,head and neck,fluorouracil,systemic,,Central/South Asian,0,0,0,0,,,,,,,,,,1,none,1000,8
-MCC-004,breast,capecitabine,systemic,,Central/South Asian,0,0,0,0,,,,,,,,,,4,neutropenia,1250,2
-MCC-005,gastric,capecitabine,systemic,,Central/South Asian,1,0,0,0,,,,,,,,,,3,HFS,1000,3
-MCC-006,colorectal,capecitabine,systemic,,Central/South Asian,0,0,0,0,,,,,,,,,,2,diarrhoea,1000,8
-MCC-007,colorectal,capecitabine,systemic,,Central/South Asian,0,0,0,0,,,,,,,,,,0,none,1000,8
-MCC-008,head and neck,fluorouracil,systemic,,Central/South Asian,0,0,0,0,,,,,,,,,,3,mucositis,1000,5
+anonymised_id,cancer_type,fluoropyrimidine_drug,regimen,treatment_start_date,population,rs1801268,rs72547601,rs141044036,rs67376798,rs55674432,rs112766203,rs1801160,rs137999090,rs55971861,rs3918290,rs145773863,rs138616379,rs59086055,rs55886062,rs1801159,rs1801158,rs111858276,rs72549304,rs186169810,rs56038477,rs78060119,rs75017182,rs143154602,rs183385770,rs146356975,rs1801266,rs72549307,rs72549308,rs115232898,rs2297595,rs1801265,rs72549310,max_toxicity_grade,toxicity_type,starting_dose_mg_m2,cycles_received
+MCC-001,colorectal,capecitabine,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,0,,,,,,,,,,,,,3,diarrhoea,1000,6
+MCC-002,colorectal,capecitabine,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,1,,,,,,,,,,,,,3,mucositis,1000,4
+MCC-003,head and neck,fluorouracil,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,0,,,,,,,,,,,,,1,none,1000,8
+MCC-004,breast,capecitabine,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,0,,,,,,,,,,,,,4,neutropenia,1250,2
+MCC-005,gastric,capecitabine,systemic,,Central/South Asian,,,,0,,,,,,1,,,,0,,,,,,0,,,,,,,,,,,,,3,HFS,1000,3
+MCC-006,colorectal,capecitabine,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,0,,,,,,,,,,,,,2,diarrhoea,1000,8
+MCC-007,colorectal,capecitabine,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,0,,,,,,,,,,,,,0,none,1000,8
+MCC-008,head and neck,fluorouracil,systemic,,Central/South Asian,,,,0,,,,,,0,,,,0,,,,,,0,,,,,,,,,,,,,3,mucositis,1000,5

@@ -24,7 +24,7 @@ import anukriti_pgx_core
 import pytest
 
 from asl.evidence import _load_gene
-from asl.interpret import CPIC_ALLELE, PLUS_STRAND
+from asl.interpret import CPIC_ALLELE, GRCH38_POS, PLUS_STRAND
 
 ALLELE_TABLE = (
     Path(anukriti_pgx_core.__file__).parent
@@ -95,3 +95,32 @@ def test_plus_strand_pairs_are_distinct_single_bases(
     ref, alt = pair
     assert ref in "ACGT" and alt in "ACGT", f"{rsid}: not a single base"
     assert ref != alt, f"{rsid}: REF equals ALT"
+
+
+def test_every_locus_has_a_grch38_position() -> None:
+    """A position per locus, as data rather than a comment.
+
+    The generator in synthetic_genomes matches 1000 Genomes records by
+    position and REF/ALT, because the GRCh37 phase 3 release carries an empty
+    ID column and rsID matching silently finds nothing. asl stays the source
+    of truth for where each locus is. The positions come from CPIC; 13 of the
+    32 were independently corroborated against the 1000 Genomes GRCh38
+    high-coverage panel, the other 19 are absent from it (CPIC only).
+    """
+    assert set(GRCH38_POS) == set(PLUS_STRAND)
+    # DPYD spans roughly chr1:97.08-97.89 Mb on GRCh38. The window is
+    # deliberately coarse: this test checks internal consistency, and CPIC is
+    # the single authority for positions, so no second source (e.g. dbSNP)
+    # is imported here. The rs3918290 anchor below catches a whole-table
+    # assembly relabel.
+    for rsid, pos in GRCH38_POS.items():
+        assert isinstance(pos, int), rsid
+        assert 97_070_000 < pos < 97_890_000, (rsid, pos)
+    # Positions are unique: two loci at one coordinate would make the
+    # position-plus-alleles match ambiguous.
+    assert len(set(GRCH38_POS.values())) == len(GRCH38_POS)
+    # GRCh38, not GRCh37: rs3918290 is at 97,450,058 on GRCh38 and
+    # 97,915,614 on GRCh37. 13 of the 32 loci were corroborated by
+    # position-and-alleles matching against the 1000 Genomes GRCh38
+    # high-coverage panel; the other 19 are absent there, CPIC only.
+    assert GRCH38_POS["rs3918290"] == 97_450_058

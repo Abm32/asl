@@ -27,7 +27,12 @@ from anukriti_pgx_core.types import Diplotype, VCFVariant
 from .models import AssayResult, Zygosity
 
 # Plus-strand genomic REF/ALT per rsID, from CPIC
-# sequence_location.chromosomelocation (g.<pos><REF>><ALT>, GRCh37).
+# sequence_location.chromosomelocation (g.<pos><REF>><ALT>). The positions are
+# GRCh38, anchored by rs3918290 being chr1:97450058 on GRCh38 against 97915614
+# on GRCh37. 13 of the 32 were independently corroborated by position-and-alleles
+# matching against the 1000 Genomes GRCh38 high-coverage panel; the other 19 are
+# absent from that panel (too rare for 3,202 samples) and so carry CPIC as their
+# only source.
 #
 # This is the same convention pgx-core 0.7.2+ uses in its allele table and the
 # same convention a VCF and a dbSNP-forward assay report use, so the letters
@@ -80,6 +85,46 @@ PLUS_STRAND: dict[str, tuple[str, str]] = {
     "rs137999090": ("C", "T"),  # c.2021G>A  g.97373598C>T
     "rs141044036": ("T", "C"),  # c.2872A>G  g.97082365T>C
     "rs72547601": ("T", "C"),   # c.2933A>G  g.97079121T>C
+}
+
+#: GRCh38 chr1 position of each locus, as data rather than a comment.
+#:
+#: Consumers match 1000 Genomes records on position plus REF/ALT. The GRCh37
+#: phase 3 release has an empty ID column, so matching on rsID there finds
+#: nothing at all and does so silently.
+GRCH38_POS: dict[str, int] = {
+    "rs3918290": 97450058,
+    "rs55886062": 97515787,
+    "rs67376798": 97082391,
+    "rs75017182": 97579893,
+    "rs56038477": 97573863,
+    "rs112766203": 97305279,
+    "rs115232898": 97699474,
+    "rs146356975": 97595149,
+    "rs55674432": 97098616,
+    "rs72549304": 97549609,
+    "rs1801265": 97883329,
+    "rs1801160": 97305364,
+    "rs1801159": 97515839,
+    "rs2297595": 97699535,
+    "rs1801158": 97515865,
+    "rs1801266": 97691776,
+    "rs1801268": 97079071,
+    "rs78060119": 97573943,
+    "rs55971861": 97382461,
+    "rs72549310": 97883353,
+    "rs72549308": 97699430,
+    "rs72549307": 97699399,
+    "rs183385770": 97593322,
+    "rs143154602": 97593289,
+    "rs186169810": 97573785,
+    "rs111858276": 97549600,
+    "rs59086055": 97450190,
+    "rs138616379": 97450189,
+    "rs145773863": 97450187,
+    "rs137999090": 97373598,
+    "rs141044036": 97082365,
+    "rs72547601": 97079121,
 }
 
 # rsID -> CPIC allele name, for evidence lookup.
