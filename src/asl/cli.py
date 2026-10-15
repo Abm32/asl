@@ -47,6 +47,7 @@ from .models import (
     Zygosity,
 )
 from .pipeline import build
+from .residual import actionable_loci
 
 # Panel presets. A panel is a *list of loci*, and choosing one is choosing what
 # the report may conclude — so presets are named and explicit rather than
@@ -56,8 +57,32 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
         "CPIC 4-variant DPYD panel (reaches HapB3 via the tag SNP)",
         CPIC_ACTIONABLE,
     ),
+    # These four add no actionable coverage, and the label said otherwise
+    # until 2026-10-14. CPIC calls all four normal function; the DPWG calls
+    # them "fully functional" and leaves them out of its gene activity score;
+    # the EMA names no variants at all; the FDA names no DPYD alleles; ClinVar
+    # germline consensus is benign. Nothing recommends a dose change on any of
+    # them.
+    #
+    # "Common in South Asians" was also false for three of the four. In
+    # gnomAD v4, confirmed against 1000 Genomes: *9A is African-enriched
+    # (AFR 0.41 > SAS 0.25 ~ NFE 0.22); *5 is LOWEST in South Asians of the
+    # major populations (SAS 0.096 against EAS 0.27, AMR 0.29, NFE 0.20); and
+    # c.496A>G is level with Europeans (SAS 0.090, NFE 0.093). Only *6 is
+    # genuinely South Asian-enriched, at roughly twice the European frequency.
+    #
+    # They are still worth reporting, for two reasons that are not clinical:
+    # naming a diplotype correctly needs the star alleles that define it, and
+    # *6 carries a consistent modest toxicity signal in meta-analysis
+    # (OR 1.70, 33 studies, 17,485 patients, PMID 42727832) that is a research
+    # marker, not a dose input -- those same authors found it added nothing to
+    # haplotype-based risk stratification. For actual South Asian coverage use
+    # `amp_tier1`, which carries c.2279C>T.
     "cpic4_plus_sas": (
-        "CPIC 4-variant panel + 4 alleles common in South Asians",
+        (
+            "CPIC 4-variant panel + 4 star alleles CPIC and the DPWG both call "
+            "normal function (no added actionable coverage)"
+        ),
         CPIC_ACTIONABLE + ("rs1801265", "rs1801160", "rs1801159", "rs2297595"),
     ),
     # The same four actionable variants, but reaching HapB3 through the CAUSAL
@@ -418,6 +443,10 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     """
     rows = read_rows(args.table)
     _, loci = PANELS[args.panel]
+    # The published rates printed under this table define their comparison
+    # group by the absence of an ACTIONABLE variant, so the table has to split
+    # on the same thing or it contradicts its own comparator.
+    deciding = actionable_loci("DPYD", loci)
 
     # A spreadsheet can list the same patient twice — a corrected row appended
     # below the original is how a site actually edits a CSV. Counting both would
@@ -440,11 +469,15 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     incomplete = 0
     for row in rows:
         g = row_genotypes(row)
-        unread = [r for r in loci if g.get(r) is None]
+        # Only the actionable loci decide the split, and only they can make a
+        # patient incomplete. A locus CPIC calls normal function cannot move
+        # anyone across the line the table draws, so a call there must not
+        # count as positive and a no-call there must not discard the patient.
+        unread = [r for r in deciding if g.get(r) is None]
         if unread:
             incomplete += 1
             continue
-        positive = any(g[r] is not Zygosity.HOM_REF for r in loci)
+        positive = any(g[r] is not Zygosity.HOM_REF for r in deciding)
         grade = (row.get("max_toxicity_grade") or "").strip()
         if not grade.isdigit():
             missing += 1

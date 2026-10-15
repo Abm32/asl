@@ -48,7 +48,7 @@ The numbers, and why each is used where it is:
 from __future__ import annotations
 
 from . import evidence
-from .interpret import assayed_variant_name
+from .interpret import CPIC_ALLELE, assayed_variant_name
 from .models import AssayResult, Regimen, ResidualRisk
 
 # Verbatim from the CPIC DPYD guideline (Amstutz et al., Clin Pharmacol Ther
@@ -135,6 +135,42 @@ _CARRIER_REFUSAL = (
 # therefore compatible with the wild-type comparison group. Read from the pinned
 # CPIC evidence table rather than listed here, so the set cannot drift from it.
 _NORMAL_FUNCTION = "normal function"
+
+
+def actionable_loci(gene: str, loci: tuple[str, ...] | list[str]) -> tuple[str, ...]:
+    """The subset of ``loci`` whose CPIC function is not normal.
+
+    The quadrant tables divide patients into panel-positive and panel-negative
+    and then print, underneath, two published rates whose own groups were
+    defined by the absence of an *actionable* variant. A locus CPIC calls
+    normal function cannot move a patient between those groups, so counting a
+    call there as panel-positive contradicts the comparator printed beside it
+    — and does so for the most common alleles in the gene, which is where it
+    does the most damage: `*9A` alone is about a quarter of Central/South
+    Asian chromosomes.
+
+    This is the locus-level twin of ``_found_non_normal``, which already
+    applies the same rule to found alleles. Both read the pinned CPIC table
+    rather than naming alleles here, so neither can drift from it.
+
+    An rsID with no citable CPIC row is kept, matching ``_found_non_normal``:
+    when the function cannot be read, the safe direction is to let the locus
+    count rather than silently drop it from the classification.
+    """
+    out: list[str] = []
+    for rsid in loci:
+        label = CPIC_ALLELE.get(rsid)
+        if not label:
+            out.append(rsid)
+            continue
+        try:
+            fn = evidence.record_for(gene, label).clinical_function
+        except evidence.EvidenceError:
+            out.append(rsid)
+            continue
+        if (fn or "").strip().lower() != _NORMAL_FUNCTION:
+            out.append(rsid)
+    return tuple(out)
 
 
 def _found_non_normal(assay: AssayResult) -> tuple[str, ...]:

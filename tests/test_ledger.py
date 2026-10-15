@@ -455,3 +455,27 @@ def test_the_cli_quadrant_supersedes_a_duplicate_csv_row(tmp_path) -> None:
     assert "1 row(s) superseded" in out
     # The later row wins, so the single patient lands in the non-toxic cell.
     assert "0/1 (0.0%) of panel-NEGATIVE" in out
+
+
+def test_ledger_quadrant_ignores_normal_function_loci():
+    """`ledger.quadrant` is the stricter path the README advertises. It was
+    strict about coverage and blind to function, so it split on the same
+    wrong thing `cmd_quadrant` did: a `*9A` call made a patient positive."""
+    from asl.ledger import quadrant
+
+    panel = ("rs3918290", "rs55886062", "rs67376798", "rs56038477",
+             "rs1801265")
+    base = {r: "0/0" for r in panel}
+    entries = [
+        {"anonymised_id": "P1", "rsids_tested": list(panel),
+         "genotypes": {**base, "rs1801265": "0/1"},
+         "max_toxicity_grade": 4},
+        {"anonymised_id": "P2", "rsids_tested": list(panel),
+         "genotypes": {**base, "rs3918290": "0/1"},
+         "max_toxicity_grade": 4},
+    ]
+    cells = quadrant(entries, panel)
+    # P1 carries only a CPIC normal-function allele: negative.
+    # P2 carries *2A, no function: positive.
+    assert cells["negative_toxic"] == 1
+    assert cells["positive_toxic"] == 1
