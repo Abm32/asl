@@ -7,12 +7,20 @@ engine gained 13 loci that no panel preset could name, and that were reachable
 only if a VCF happened to supply them directly. Nothing failed — the product
 just quietly could not order part of the coverage it advertised.
 
-The failure mode is one-directional and that is why it went unnoticed. A locus
-``asl`` pins but the engine cannot call fails loudly at interpretation time. A
-locus the engine calls but ``asl`` does not pin fails *nothing*; it simply never
-appears in a panel, a report's coverage strip, or an importer column.
+Both directions are now asserted, and the second one is here because the
+assumption written in this docstring turned out to be false.
 
-So the assertion below is deliberately on the direction that stays silent.
+A locus the engine calls but ``asl`` does not pin fails *nothing*; it simply
+never appears in a panel, a report's coverage strip, or an importer column.
+
+A locus ``asl`` pins but the engine cannot call was assumed to "fail loudly
+at interpretation time". It does **not**, except in the degenerate case
+where it is the only locus assessed — see
+``test_engine_calls_every_locus_asl_pins``. On any real panel the engine
+drops the unknown locus silently and a homozygous no-function patient reads
+Normal Metabolizer on a standard dose.
+
+So neither direction is safe to leave untested.
 """
 
 from __future__ import annotations
@@ -124,3 +132,37 @@ def test_every_locus_has_a_grch38_position() -> None:
     # position-and-alleles matching against the 1000 Genomes GRCh38
     # high-coverage panel; the other 19 are absent there, CPIC only.
     assert GRCH38_POS["rs3918290"] == 97_450_058
+
+
+def test_engine_calls_every_locus_asl_pins() -> None:
+    """The other direction, which this file previously assumed was safe.
+
+    The module docstring above says a locus ``asl`` pins but the engine
+    cannot call "fails loudly at interpretation time". **That is only true
+    when it is the sole locus assessed.** Measured against the pinned
+    engine, a four-locus panel carrying one unknown positive is not loud at
+    all:
+
+        rs3918290  0/0   rs55886062 0/0   rs67376798 0/0   rs75017182 0/0
+        rs72549303 1/1   <- homozygous DPYD*3, an engine that lacks the row
+
+        -> *1/*1, Normal Metabolizer, STANDARD, refusal ''
+
+    A homozygous no-function patient reported Normal Metabolizer on a full
+    fluoropyrimidine dose, with nothing flagged. The ``NOT_ASSESSED``
+    refusal fires only when ``sites_assessed`` is zero, so any real panel
+    masks it.
+
+    So pinning a locus ahead of the engine is not a harmless
+    forward-declaration — it is a false negative waiting for a lab to order
+    it. This asserts the ordering: ``asl`` may not advertise a locus its
+    own pinned engine cannot interpret.
+    """
+    unsupported = sorted(set(PLUS_STRAND) - _engine_rsids())
+    assert not unsupported, (
+        f"asl pins {len(unsupported)} locus/loci the pinned engine cannot "
+        f"call: {unsupported}. A panel preset could order them, a lab could "
+        f"report one positive, and the engine would silently drop it — the "
+        f"patient reads Normal Metabolizer. Bump anukriti-pgx-core first, "
+        f"then add the locus."
+    )
