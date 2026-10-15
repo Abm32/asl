@@ -79,8 +79,10 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
     # haplotype-based risk stratification. For actual South Asian coverage use
     # `amp_tier1`, which carries c.2279C>T.
     "cpic4_plus_sas": (
-        "CPIC 4-variant panel + 4 star alleles CPIC and the DPWG both call "
-        "normal function (no added actionable coverage)",
+        (
+            "CPIC 4-variant panel + 4 star alleles CPIC and the DPWG both call "
+            "normal function (no added actionable coverage)"
+        ),
         CPIC_ACTIONABLE + ("rs1801265", "rs1801160", "rs1801159", "rs2297595"),
     ),
     # The same four actionable variants, but reaching HapB3 through the CAUSAL
