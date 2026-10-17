@@ -350,6 +350,13 @@ class Interpretation:
     cpic_recommendation_text: str = ""
     cpic_activity_score_range: str = ""
     cpic_citations: tuple[str, ...] = ()
+    # Loci the engine read but holds no allele definition for. Three distinct
+    # states, never collapsed: ``None`` means this engine cannot report unknown
+    # loci at all (the attribute arrived after 0.11.0, which is the pin), ``()``
+    # means it reported none, and a non-empty tuple means it reported these.
+    # Distinct from ``uncallable_alleles``: that is an allele the engine knows
+    # and could not call, this is a locus it does not know.
+    unknown_loci: tuple[str, ...] | None = None
 
     engine_version: str = ""
     generated_at: datetime = field(

@@ -245,13 +245,33 @@ def require_hapb3_capable_engine() -> None:
         )
 
 
+def unknown_loci_from(result: object) -> tuple[str, ...] | None:
+    """The engine's unknown loci, or ``None`` when it cannot report them.
+
+    ``Diplotype.unknown_loci`` landed in ``pgx-core`` after the 0.11.0 release,
+    so on the pinned engine the attribute is absent. ``getattr(..., ())`` would
+    yield an empty tuple, which a consumer reads as "the engine looked and found
+    none" — the same silent, falsely reassuring collapse that
+    ``require_hapb3_capable_engine`` exists to stop.
+
+    So the three states are kept distinct and carried into the payload:
+    ``None`` (this engine cannot report unknown loci), ``()`` (it reported
+    none), and a non-empty tuple (it reported these). A hard refusal is not
+    used here because every released engine would fail it; the gap is disclosed
+    instead, and disappears on its own once the pin moves past 0.11.0.
+    """
+    if not hasattr(Diplotype, "unknown_loci"):
+        return None
+    return tuple(getattr(result, "unknown_loci", ()) or ())
+
+
 def call_engine(
     assay: AssayResult,
-) -> tuple[str, str, str, bool, int, dict[str, int], str]:
+) -> tuple[str, str, str, bool, int, dict[str, int], str, tuple[str, ...] | None]:
     """Run the deterministic engine.
 
     Returns ``(diplotype, phenotype, clinical_action, overspecified,
-    copies_detected, allele_counts, hapb3_basis)``.
+    copies_detected, allele_counts, hapb3_basis, unknown_loci)``.
 
     ``allele_counts`` is the engine's per-allele copy count. It is returned
     alongside the diplotype so a report can show that the two named alleles
@@ -324,6 +344,7 @@ def call_engine(
         copies,
         counts,
         str(getattr(result, "hapb3_basis", "") or ""),
+        unknown_loci_from(result),
     )
 
 

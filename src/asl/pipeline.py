@@ -83,6 +83,7 @@ def build(assay: AssayResult) -> Interpretation:
         copies,
         counts,
         hapb3_basis,
+        unknown_loci,
     ) = interpret.call_engine(assay)
 
     # Provenance for every allele actually found.
@@ -180,5 +181,6 @@ def build(assay: AssayResult) -> Interpretation:
         cpic_recommendation_text=recommendation,
         cpic_activity_score_range=score_range,
         cpic_citations=cpic_citations,
+        unknown_loci=unknown_loci,
         engine_version=interpret.engine_version(),
     )
