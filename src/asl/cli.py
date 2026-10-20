@@ -8,7 +8,14 @@ table or a few flags, prints a report.
     asl interpret --table patients.xlsx    # a batch from the lab's spreadsheet
     asl interpret --genotype 'HapB3=het' --rest-negative   # one typed patient
     asl panels                             # what panel presets exist
+    asl variants                           # every locus this engine calls
+    asl variants --format csv              # the same, for a site's mapping sheet
     asl quadrant --table patients.csv      # the four-quadrant table for a cohort
+
+``--panel`` takes a preset name or a site's own loci, comma-separated, so a
+laboratory can run its real assay rather than the nearest guideline::
+
+    asl quadrant --table cohort.csv --panel '*2A,*13,c.2846A>T,HapB3,*9A,*5,*6'
 
 ``interpret`` takes CSV, TSV or XLSX, and column headers may be rsIDs, CPIC
 cDNA names, star alleles or ``HapB3`` — see ``asl.importer``, which also
@@ -22,12 +29,13 @@ which is the question a retrospective exists to settle.
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
-from . import render
+from . import evidence, render
 from .importer import (
     LOCUS_SYNONYM,
     ImportRefused,
@@ -36,7 +44,12 @@ from .importer import (
     read_zygosity,
     row_genotypes,
 )
-from .interpret import CPIC_ACTIONABLE, CPIC_ALLELE, InterpretationRefused
+from .interpret import (
+    CPIC_ACTIONABLE,
+    CPIC_ALLELE,
+    InterpretationRefused,
+    assayed_variant_name,
+)
 from .models import (
     AssayMethod,
     AssayResult,
@@ -123,6 +136,65 @@ PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
     ),
 }
 
+
+def resolve_panel(spec: str) -> tuple[str, tuple[str, ...]]:
+    """A preset name, or the list of loci a site's own assay actually reads.
+
+    Presets describe guidelines. No partner site runs a guideline: it runs the
+    assay it bought, and the question it asks first is "what does *our* panel
+    miss?" That question cannot be answered by choosing the nearest preset,
+    because the nearest preset is not what was tested, and attributing a
+    report to a panel the laboratory did not run is the same conflation the
+    rest of this package exists to prevent.
+
+    So a comma-separated list of loci is accepted anywhere a preset name is::
+
+        --panel rs3918290,rs55886062,c.2846A>T,HapB3,*9A,*5,*6
+
+    Names are resolved through ``LOCUS_SYNONYM`` — the same table the
+    spreadsheet importer uses — so a site may name its loci the way its own
+    assay report prints them: ``rs3918290``, ``c.1905+1G>A``, ``*2A`` and
+    ``DPYD*2A`` are one locus, and the HapB3 tag and causal variants stay
+    distinct.
+
+    An unrecognised name is refused rather than skipped. Silently dropping one
+    would produce a panel one locus short of the assay, and every report
+    attributed to it would describe a variant as unread that the laboratory
+    did read — or, worse in the other direction, leave a real finding with
+    nowhere to land.
+    """
+    if spec in PANELS:
+        return PANELS[spec]
+
+    names = [n.strip() for n in spec.split(",") if n.strip()]
+    if not names:
+        raise InterpretationRefused(
+            "empty panel. Name a preset (see `asl panels`) or list the loci "
+            "the assay reads, for example --panel rs3918290,c.2846A>T,HapB3"
+        )
+
+    loci: list[str] = []
+    unknown: list[str] = []
+    for name in names:
+        rsid = LOCUS_SYNONYM.get(locus_key(name))
+        if rsid is None:
+            unknown.append(name)
+        elif rsid not in loci:
+            loci.append(rsid)
+    if unknown:
+        raise InterpretationRefused(
+            "not a DPYD locus this engine calls: "
+            + ", ".join(repr(n) for n in unknown)
+            + ". Run `asl variants` for every locus and the names each one "
+            "answers to. asl will not drop a locus it cannot place: a panel "
+            "silently short of the assay misreports what was read."
+        )
+    return (
+        f"site-defined panel, {len(loci)} loci: "
+        + ", ".join(assayed_variant_name(r) for r in loci),
+        tuple(loci),
+    )
+
 def _assay(
     panel: str,
     genotypes: dict[str, Zygosity | None],
@@ -161,7 +233,7 @@ def _assay(
     was widened, not the four South Asian additions it carried before — for
     sites that can fill them, and leaves blank the ones a site cannot.
     """
-    label, loci = PANELS[panel]
+    label, loci = resolve_panel(panel)
     off_panel = sorted(r for r in set(genotypes) - set(loci) if genotypes[r] is not None)
     if off_panel:
         raise InterpretationRefused(
@@ -228,7 +300,7 @@ def _all_negative(panel: str) -> dict[str, Zygosity | None]:
     Used by the demo and by tests. Written out rather than defaulted, because a
     default is what let a blank cell become a negative result.
     """
-    return {rsid: Zygosity.HOM_REF for rsid in PANELS[panel][1]}
+    return {rsid: Zygosity.HOM_REF for rsid in resolve_panel(panel)[1]}
 
 
 def _with_start_date(assay: AssayResult, raw: str | None) -> AssayResult:
@@ -259,6 +331,93 @@ def cmd_panels(_args: argparse.Namespace) -> int:
         print(f"{key:<16} {label}")
         print(f"{'':16} {len(loci)} loci: {', '.join(CPIC_ALLELE[r] for r in loci)}")
         print()
+    return 0
+
+
+def cmd_variants(args: argparse.Namespace) -> int:
+    """Every DPYD locus this engine calls, for a site to map its own assay against.
+
+    This is the first artifact a partner laboratory asks for, and it is a
+    command rather than a document on purpose. A variant list written by hand
+    into an email goes stale the moment the engine's allele table moves, and a
+    stale list is exactly what a laboratory maps its panel against before
+    concluding — wrongly — that it is covered. Every column below is read from
+    the pinned CPIC evidence table at run time, so this output and the engine
+    cannot disagree.
+
+    The ``actionable`` column is the one that answers the question sites mean
+    to ask. A panel is not better for carrying more loci: most of these are
+    CPIC *normal function*, and genotyping them changes no dose. Counting loci
+    is the mistake this table exists to prevent; `cpic4_plus_sas` carries eight
+    and still reaches no more actionable variants than the four.
+    """
+    gene = "DPYD"
+    pop = args.population
+    # `full` contains every locus by definition, so listing it against each row
+    # would be noise. The presets that discriminate are the ones named.
+    presets = [k for k in PANELS if k != "full"]
+
+    rows = []
+    for rsid, label in CPIC_ALLELE.items():
+        try:
+            rec = evidence.record_for(gene, label, pop)
+            function = rec.clinical_function or "unstated"
+            activity = rec.activity_value or ""
+            freq = rec.frequency_in_population
+            cites = ";".join(rec.citations)
+        except evidence.EvidenceError as exc:
+            # Not fatal here: this is an inventory, and a locus whose evidence
+            # row cannot be cited is a fact the reader needs rather than a
+            # reason to print nothing. It is marked, never guessed.
+            function = f"UNCITABLE ({exc.__class__.__name__})"
+            activity, freq, cites = "", None, ""
+        rows.append({
+            "rsid": rsid,
+            "assayed_variant": assayed_variant_name(rsid),
+            "cpic_allele": label,
+            "clinical_function": function,
+            "activity_value": activity,
+            "frequency": freq,
+            "actionable": "yes" if rsid in actionable_loci(gene, (rsid,)) else "no",
+            "panels": " ".join(k for k in presets if rsid in PANELS[k][1]),
+            "citations_pmid": cites,
+        })
+
+    if args.format == "csv":
+        w = csv.DictWriter(sys.stdout, fieldnames=list(rows[0]))
+        w.writeheader()
+        for row in rows:
+            out = dict(row)
+            freq = row["frequency"]
+            out["frequency"] = "" if freq is None else f"{freq:.6f}"
+            w.writerow(out)
+        return 0
+
+    print(f"{len(rows)} DPYD loci callable by anukriti-pgx-core via asl.")
+    print(f"Allele frequency column is CPIC's for: {pop}")
+    print(
+        "`actionable` means CPIC assigns the allele something other than "
+        "normal function.\nA locus marked `no` changes no dose, however "
+        "common it is."
+    )
+    print()
+    hdr = (
+        f"{'rsID':<13}{'assay reads':<34}{'CPIC function':<21}"
+        f"{'act':<5}{'freq':>9}  {'use':<4}{'presets'}"
+    )
+    print(hdr)
+    print("-" * len(hdr))
+    for row in rows:
+        freq = "  n/a" if row["frequency"] is None else f"{row['frequency'] * 100:.4f}%"
+        print(
+            f"{row['rsid']:<13}{row['assayed_variant'][:33]:<34}"
+            f"{row['clinical_function'][:20]:<21}{row['activity_value']:<5}"
+            f"{freq:>9}  {row['actionable']:<4}{row['panels']}"
+        )
+    print()
+    n_act = sum(1 for r in rows if r["actionable"] == "yes")
+    print(f"{n_act} of {len(rows)} loci are actionable; the other "
+          f"{len(rows) - n_act} inform the diplotype name and nothing else.")
     return 0
 
 
@@ -323,7 +482,7 @@ def _typed_genotypes(
     negative" are different statements and only the second supports a panel
     attribution.
     """
-    loci = PANELS[panel][1]
+    loci = resolve_panel(panel)[1]
     out: dict[str, Zygosity | None] = (
         {rsid: Zygosity.HOM_REF for rsid in loci} if rest_negative else {}
     )
@@ -442,7 +601,7 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
     analysis turns on, and in the direction that flatters our own thesis.
     """
     rows = read_rows(args.table)
-    _, loci = PANELS[args.panel]
+    panel_label, loci = resolve_panel(args.panel)
     # The published rates printed under this table define their comparison
     # group by the absence of an ACTIONABLE variant, so the table has to split
     # on the same thing or it contradicts its own comparator.
@@ -496,7 +655,7 @@ def cmd_quadrant(args: argparse.Namespace) -> int:
             "generated, not observed, and are not evidence about any "
             "population or panel. ***"
         )
-    print(f"Four-quadrant table — panel: {PANELS[args.panel][0]}")
+    print(f"Four-quadrant table — panel: {panel_label}")
     print(f"n = {n} patients with a readable toxicity grade"
           + (f" ({missing} skipped, grade not recorded)" if missing else ""))
     if superseded:
@@ -565,6 +724,13 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(func=cmd_panels)
 
     p = sub.add_parser(
+        "variants", help="every DPYD locus this engine calls, with CPIC function"
+    )
+    p.add_argument("--format", default="table", choices=["table", "csv"])
+    p.add_argument("--population", default="Central/South Asian")
+    p.set_defaults(func=cmd_variants)
+
+    p = sub.add_parser(
         "interpret", help="interpret a table of patients, or one typed patient"
     )
     src = p.add_mutually_exclusive_group(required=True)
@@ -586,7 +752,11 @@ def main(argv: list[str] | None = None) -> int:
              "assuming a negative.",
     )
     p.add_argument("--regimen", default="unknown", choices=[r.value for r in Regimen])
-    p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
+    p.add_argument(
+        "--panel", default="cpic4", metavar="PRESET|LOCI",
+        help="a preset from `asl panels`, or the loci your own assay reads, "
+             "comma-separated: --panel rs3918290,c.2846A>T,HapB3",
+    )
     p.add_argument("--population", default="Central/South Asian")
     p.add_argument("--drug", default="capecitabine", choices=[d.value for d in Drug])
     p.add_argument(
@@ -607,11 +777,22 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("quadrant", help="four-quadrant table for a cohort table")
     p.add_argument("--table", "--csv", dest="table", required=True)
-    p.add_argument("--panel", default="cpic4", choices=sorted(PANELS))
+    p.add_argument(
+        "--panel", default="cpic4", metavar="PRESET|LOCI",
+        help="a preset from `asl panels`, or the loci your own assay reads, "
+             "comma-separated: --panel rs3918290,c.2846A>T,HapB3",
+    )
     p.set_defaults(func=cmd_quadrant)
 
     args = ap.parse_args(argv)
-    return int(args.func(args))
+    try:
+        return int(args.func(args))
+    except (InterpretationRefused, ImportRefused) as exc:
+        # A bad --panel is reached inside the command, after argparse is done.
+        # It is a user error and prints as one; a traceback would read like a
+        # defect in the engine and bury the sentence that says what to fix.
+        print(f"REFUSED: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
