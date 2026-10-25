@@ -341,7 +341,7 @@ def test_a_free_text_phenotype_is_refused() -> None:
     Free text in that column makes it unanalysable, which defeats the purpose of
     recording it at all.
     """
-    with pytest.raises(LedgerRefused, match="not a CPIC metabolizer term"):
+    with pytest.raises(LedgerRefused, match="not a CPIC phenotype for DPYD"):
         _entry(cpic_phenotype_at_dosing="probably fine")
 
 

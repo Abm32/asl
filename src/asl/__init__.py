@@ -25,6 +25,7 @@ from .models import (
     VariantCall,
     Zygosity,
 )
+from . import vocabulary
 from .pipeline import build
 from .report import render
 
@@ -46,4 +47,8 @@ __all__ = [
     "__version__",
     "build",
     "render",
+    # Which phenotype words are real, for which gene, at which layer. Exported
+    # because consumers outside this package need it: prahari answers
+    # thiopurines on TPMT and NUDT15, whose vocabulary is not DPYD's.
+    "vocabulary",
 ]

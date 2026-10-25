@@ -72,3 +72,10 @@ jobs:
         # but not yet published — see P4_DPYD_HAPB3_CPIC_UPDATE_PENDING in
         # src/asl/data/DPYD_conflicts.json, which exists for exactly that gap.
         run: python scripts/regen_evidence_tables.py --check
+
+      - name: Diff the pinned CPIC vocabulary against live CPIC
+        # A new phenotype term, or a changed definition, must reach a human.
+        # The failure this catches is specific: a gene starts emitting a term
+        # the committed snapshot does not carry, and every row for that gene
+        # is then refused at entry with no indication that CPIC moved.
+        run: python scripts/regen_cpic_vocabulary.py --check

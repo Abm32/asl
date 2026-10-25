@@ -190,6 +190,58 @@ negatives. Both are the same defect — one number doing two jobs.
 
 ---
 
+## The phenotype vocabulary, and five things wrong with holding one set of it
+
+`src/asl/vocabulary.py` resolves which phenotype words are real, for which
+gene, at which layer. It replaced a four-element frozenset and a four-line
+hand-written glossary. Each of the five reasons below was measured against the
+live CPIC API on 2026-10-25 and is recorded under `_measurements` in
+`src/asl/data/CPIC_VOCABULARY.json`; `scripts/regen_cpic_vocabulary.py --check`
+runs in CI and fails the build when CPIC moves.
+
+**1. CPIC's standardised list does not cover what CPIC emits.** The `term`
+table defines **11** phenotype terms. The `diplotype` table emits **33**
+distinct `generesult` values. **24** of those are absent from the standardised
+list — including `Indeterminate` and `Possible Intermediate Metabolizer`, the
+two this package most needs.
+
+**2. Matching on CPIC's own published spelling matches nothing.** The term
+table writes `Normal metabolizer`; the diplotype table writes
+`Normal Metabolizer`. Across all 33 emitted values and all 11 standardised
+terms there is **not one exact-case match**. A consumer that validates against
+CPIC's vocabulary, spelled as CPIC publishes it, rejects every real CPIC
+result. Every comparison here casefolds.
+
+**3. The vocabulary is per gene, and genes do not answer on one dimension.**
+DPYD has 3 terms; TPMT and NUDT15 have 5 each; CYP2C19 has 8. SLCO1B1 answers
+in *Function* terms rather than *Metabolizer* terms, and G6PD in
+`Deficient`/`Normal`/`Variable`. A global set can only be right for the gene it
+was written against — here, DPYD — and validating a TPMT row against it refuses
+a correct row, which is the same defect as accepting a wrong one.
+
+**4. "Not established" lives at a different layer.** `No Result` appears
+**251 times** as a key in `recommendation.phenotypes` and **never once** as a
+`diplotype.generesult`. CPIC models a gene that was not assayed at the
+recommendation layer alone, so each gene has two vocabularies and the
+recommendation one is strictly larger. `vocabulary.NOT_ESTABLISHED` is that
+value; `phenotypes_for(gene, layer="recommendation")` is where it is valid.
+
+**5. Three standardised terms mean two different things.** `Normal function`,
+`Decreased function` and `Increased function` each appear twice in CPIC's term
+table — once under *Allele functional status* and once under *Phenotype:
+transporters* — with different definitions. `Normal function` is "Fully
+functional/wild-type" as an allele and "Fully functional transporter function"
+as a phenotype. A lookup keyed on the word alone returns whichever row came
+last and says nothing. `gloss()` therefore takes a `kind`. This one was found
+by this package's own tests, not by the survey.
+
+The glosses are CPIC's `functionaldef` strings, verbatim. Where CPIC never
+defined a term the report prints *"CPIC publishes no standardised definition
+for this term"* rather than the phenotype bare, because a bare phenotype reads
+as though nothing were missing. CPIC's `term` table carries a `loinc` column;
+it is empty for every row, and the snapshot records that so its arrival is
+visible rather than assumed.
+
 ## Architecture
 
 ```

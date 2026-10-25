@@ -15,22 +15,41 @@ from __future__ import annotations
 
 from .interpret import CPIC_ALLELE, assayed_variant_name
 from .models import AssayMethod, Interpretation, Regimen, TestStatus
+from . import vocabulary
 from .residual import untested_statement
 
 _W = 76
 
-# Plain-language gloss for each CPIC DPYD phenotype, for the answer band.
+# What this gene's phenotype means, in CPIC's own words rather than ours.
 #
-# The gloss restates the phenotype; it never adds a claim. "Normal Metabolizer"
-# carries no statement about the loci that were not read, which is why the band
-# puts the coverage strip and the residual-risk pointer immediately beneath it
-# rather than leaving the phenotype alone at the top of the page.
-_PHENOTYPE_GLOSS: dict[str, str] = {
-    "Normal Metabolizer": "normal DPD activity predicted from the loci that were read",
-    "Intermediate Metabolizer": "REDUCED DPD activity",
-    "Poor Metabolizer": "little or no DPD activity",
-    "Indeterminate": "DPD activity could not be determined",
-}
+# Hand-written glosses lived here until 2026-10-25. They were replaced because
+# CPIC publishes the definitions itself, in the `term` table its own API
+# serves, and a definition we author is a clinical claim we are not entitled
+# to make. The gloss restates the phenotype; it never adds anything. "Normal
+# Metabolizer" carries no statement about the loci that were not read, which is
+# why the band puts the coverage strip and the residual-risk pointer
+# immediately beneath it rather than leaving the phenotype alone at the top of
+# the page.
+#
+# One DPYD-specific addition survives, and only because CPIC's definition is
+# written for enzymes in general: the reader needs the enzyme named.
+_ENZYME = "DPD"
+
+#: Printed where CPIC uses a term it never standardised. Twenty-four of the 33
+#: phenotype values CPIC emits are absent from its own consensus term list —
+#: `Indeterminate` and `Possible Intermediate Metabolizer` among them. Saying
+#: so is better than printing the phenotype bare, which reads as though
+#: nothing were missing.
+_NO_CPIC_DEFINITION = "CPIC publishes no standardised definition for this term"
+
+
+def _phenotype_gloss(phenotype: str) -> str:
+    """CPIC's functional definition of a phenotype, or a named absence."""
+    text = vocabulary.gloss(phenotype)
+    if not text:
+        return _NO_CPIC_DEFINITION
+    # CPIC writes "enzyme activity"; the reader is holding a DPYD report.
+    return text.replace("enzyme activity", f"{_ENZYME} activity").rstrip(". ")
 
 # Coverage-strip glyphs. ASCII on purpose: this report is read in a terminal, a
 # printed PDF and an email body, and a box-drawing character that renders in one
@@ -85,11 +104,12 @@ def _answer_band(interp: Interpretation) -> list[str]:
     """
     a = interp.assay
     out = [_rule("=")]
-    gloss = _PHENOTYPE_GLOSS.get(interp.phenotype)
-    out.append(
-        f"  ANSWER    DPYD {interp.phenotype}"
-        + (f" — {gloss}" if gloss else "")
-    )
+    # The phenotype alone on the first line, so the answer survives being
+    # skimmed. CPIC's definition hangs beneath it rather than extending the
+    # line past the page width: the definitions are full sentences, and the
+    # hand-written glosses this replaced were short only because we wrote them.
+    out.append(f"  ANSWER    DPYD {interp.phenotype}")
+    out.extend(_wrap(_phenotype_gloss(interp.phenotype), "            "))
     out.append(
         f"            Diplotype {interp.diplotype}"
         + (

@@ -54,6 +54,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from . import vocabulary
 from .residual import actionable_loci
 
 # Field names that must never appear in a ledger entry. Checked on keys, so a
@@ -109,16 +110,19 @@ VARIANT_TOKENS = frozenset({
 })
 _READABLE_TOKENS = WILD_TYPE_TOKENS | VARIANT_TOKENS
 
-# CPIC's closed set of DPYD metabolizer terms, plus the engine's refusal value.
 # Free text here would make the column unanalysable, which defeats the point of
 # recording it: the whole question the ledger exists to answer is whether the
 # phenotype assigned at dosing predicted what happened.
-CPIC_PHENOTYPES = frozenset({
-    "Normal Metabolizer",
-    "Intermediate Metabolizer",
-    "Poor Metabolizer",
-    "Indeterminate",
-})
+#
+# The accepted set is now resolved per gene from ``vocabulary``, because it is
+# not one set. DPYD has three CPIC terms; TPMT and NUDT15 have five each,
+# including ``Possible Intermediate Metabolizer``, which no DPYD-shaped set
+# contains. A ledger that validated every gene against DPYD's vocabulary would
+# refuse real TPMT rows at entry — and refusing a correct row is the same
+# defect as accepting a wrong one, pointed the other way.
+#
+# Kept as a name because consumers import it. It is DPYD's set and says so.
+CPIC_PHENOTYPES = vocabulary.phenotypes_for("DPYD")
 
 # Zygosity implied by a token, for the genotype/phenotype consistency check.
 _COPIES = {
@@ -150,6 +154,10 @@ class LedgerEntry:
     genotypes: dict[str, str]
     cpic_phenotype_at_dosing: str
     engine_version: str
+    #: Which gene the recorded phenotype belongs to. Defaults to DPYD because
+    #: every row written before this field existed is a DPYD row; it is not an
+    #: assumption about rows written after.
+    gene: str = "DPYD"
     toxicity: tuple[ToxicityEvent, ...] = ()
     starting_dose_mg_m2: float | None = None
     bsa_m2: float | None = None
@@ -207,14 +215,18 @@ class LedgerEntry:
                     f"every later analysis, so recording it achieves nothing."
                 )
 
-        if self.cpic_phenotype_at_dosing not in CPIC_PHENOTYPES:
+        # Casefolded, against this gene's own vocabulary. CPIC's standardised
+        # term list and CPIC's own result table disagree on capitalisation for
+        # every single term, so a literal comparison rejects real results.
+        if not vocabulary.is_recognised(self.gene, self.cpic_phenotype_at_dosing):
+            accepted = sorted(vocabulary.phenotypes_for(self.gene))
             raise LedgerRefused(
-                f"cpic_phenotype_at_dosing {self.cpic_phenotype_at_dosing!r} is "
-                f"not a CPIC metabolizer term. Use one of: "
-                f"{', '.join(sorted(CPIC_PHENOTYPES))}. Free text makes the "
-                f"column unanalysable, and whether the phenotype assigned at "
-                f"dosing predicted the outcome is the entire question this "
-                f"ledger exists to answer."
+                f"cpic_phenotype_at_dosing "
+                f"{self.cpic_phenotype_at_dosing!r} is not a CPIC phenotype "
+                f"for {self.gene}. Use one of: {', '.join(accepted) or '(none)'}. "
+                f"Free text makes the column unanalysable, and whether the "
+                f"phenotype assigned at dosing predicted the outcome is the "
+                f"entire question this ledger exists to answer."
             )
 
         # A no-function homozygote cannot have been a Normal Metabolizer. This is
