@@ -11,6 +11,7 @@ returns an all-clear.
 
 from __future__ import annotations
 
+from . import vocabulary
 from .models import (
     AssayMethod,
     AssayResult,
@@ -25,7 +26,6 @@ from .models import (
     VariantCall,
     Zygosity,
 )
-from . import vocabulary
 from .pipeline import build
 from .report import render
 
