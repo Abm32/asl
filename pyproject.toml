@@ -48,7 +48,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.4"]
+# ruff is PINNED, not floated. CI installs this extra fresh on every run,
+# so "ruff>=0.4" meant each run could pick up new rules: master went red
+# on 2026-10-25 from lint findings no commit had introduced. Bump this
+# deliberately, in its own PR, not by accident on an unrelated push.
+dev = ["pytest>=8.0", "ruff==0.16.3"]
 
 [project.scripts]
 asl = "asl.cli:main"

@@ -13,9 +13,9 @@ Two engine artifacts are deliberately suppressed:
 
 from __future__ import annotations
 
+from . import vocabulary
 from .interpret import CPIC_ALLELE, assayed_variant_name
 from .models import AssayMethod, Interpretation, Regimen, TestStatus
-from . import vocabulary
 from .residual import untested_statement
 
 _W = 76

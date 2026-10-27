@@ -12,7 +12,6 @@ import pytest
 
 from asl import vocabulary
 
-
 # --- finding 1: the standardised list does not cover what CPIC emits -------
 
 
@@ -173,17 +172,17 @@ def test_an_unknown_kind_is_refused_rather_than_defaulted():
 def _entry(**kw):
     from asl.ledger import LedgerEntry
 
-    base = dict(
-        anonymised_id="SITE-1",
-        cancer_type="colorectal",
-        regimen="CAPOX",
-        drug="capecitabine",
-        assay_method="qPCR",
-        rsids_tested=("rs3918290",),
-        genotypes={"rs3918290": "0/0"},
-        cpic_phenotype_at_dosing="Normal Metabolizer",
-        engine_version="0.11.0",
-    )
+    base = {
+        "anonymised_id": "SITE-1",
+        "cancer_type": "colorectal",
+        "regimen": "CAPOX",
+        "drug": "capecitabine",
+        "assay_method": "qPCR",
+        "rsids_tested": ("rs3918290",),
+        "genotypes": {"rs3918290": "0/0"},
+        "cpic_phenotype_at_dosing": "Normal Metabolizer",
+        "engine_version": "0.11.0",
+    }
     base.update(kw)
     return LedgerEntry(**base)
 
