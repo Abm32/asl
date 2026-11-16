@@ -64,9 +64,18 @@ _GENES = ("DPYD", "NUDT15", "TPMT")
 _OUT_DIR = Path("src/asl/data")
 
 
+#: CPIC began refusing Python's default urllib User-Agent with HTTP 403 on
+#: 2026-10-29 while still serving curl. anukriti-pgx-core hit this and started
+#: identifying itself; this script did not, so the drift check passed from a
+#: developer machine (curl-shaped traffic) and 403'd from CI. A repo name and
+#: its public URL, never a person or an address.
+_UA = "asl (+https://github.com/AnukritiAi-hq/asl)"
+
+
 def _get(path: str) -> list[dict]:
     req = urllib.request.Request(
-        f"{_API}/{path}", headers={"Accept": "application/json"}
+        f"{_API}/{path}",
+        headers={"Accept": "application/json", "User-Agent": _UA},
     )
     with urllib.request.urlopen(req, timeout=120) as fh:  # noqa: S310 (pinned host)
         return json.load(fh)
