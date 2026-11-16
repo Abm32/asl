@@ -32,7 +32,7 @@ import anukriti_pgx_core
 import pytest
 
 from asl.evidence import _load_gene
-from asl.interpret import CPIC_ALLELE, GRCH38_POS, PLUS_STRAND
+from asl.interpret import CPIC_ALLELE, EVIDENCE_GAP, GRCH38_POS, PLUS_STRAND
 
 ALLELE_TABLE = (
     Path(anukriti_pgx_core.__file__).parent
@@ -41,6 +41,27 @@ ALLELE_TABLE = (
     / "dpyd"
     / "DPYD_alleles_anukriti_v2024.01.tsv"
 )
+
+
+def _engine_alts(rsid: str) -> set[str]:
+    """Every ALT token the installed engine's table defines at one locus.
+
+    Paired positionally with the rsIDs on compound rows, the same way the
+    engine's own matcher pairs them.
+    """
+    if not ALLELE_TABLE.exists():  # pragma: no cover - engine layout changed
+        pytest.skip(f"engine allele table not found at {ALLELE_TABLE}")
+    alts: set[str] = set()
+    with ALLELE_TABLE.open(newline="") as fh:
+        for row in csv.DictReader(fh, delimiter="\t"):
+            rsids = [r.strip() for r in row["rsid"].split(";") if r.strip()]
+            row_alts = [a.strip() for a in row["alt"].split(";") if a.strip()]
+            if len(rsids) != len(row_alts):
+                continue
+            for r, a in zip(rsids, row_alts):
+                if r == rsid:
+                    alts.add(a)
+    return alts
 
 
 def _engine_rsids() -> set[str]:
@@ -89,11 +110,18 @@ def test_every_pinned_allele_name_has_evidence() -> None:
     orphans = sorted(
         f"{rsid} -> {name}"
         for rsid, name in CPIC_ALLELE.items()
-        if name not in known
+        if name not in known and name not in EVIDENCE_GAP
     )
     assert not orphans, (
-        f"pinned allele names absent from the CPIC evidence table: {orphans}"
+        f"pinned allele names absent from the CPIC evidence table: {orphans}. "
+        f"Either add the CPIC evidence row, or declare the gap in "
+        f"asl.interpret.EVIDENCE_GAP with the reason."
     )
+    # The declared gap must stay honest in the other direction too: a name
+    # listed there that HAS evidence is a stale exemption, and exemptions
+    # that outlive their reason are how a gap becomes permanent.
+    stale = sorted(name for name in EVIDENCE_GAP if name in known)
+    assert not stale, f"EVIDENCE_GAP lists names that now have evidence: {stale}"
 
 
 @pytest.mark.parametrize("rsid,pair", sorted(PLUS_STRAND.items()))
@@ -101,8 +129,31 @@ def test_plus_strand_pairs_are_distinct_single_bases(
     rsid: str, pair: tuple[str, str]
 ) -> None:
     ref, alt = pair
-    assert ref in "ACGT" and alt in "ACGT", f"{rsid}: not a single base"
     assert ref != alt, f"{rsid}: REF equals ALT"
+    assert ref and alt, f"{rsid}: empty REF or ALT"
+    assert set(ref) <= set("ACGT") and set(alt) <= set("ACGT"), (
+        f"{rsid}: REF/ALT contain something that is not a nucleotide"
+    )
+    if len(ref) == len(alt):
+        # A substitution. Still exactly one base each, as before.
+        assert len(ref) == 1, f"{rsid}: equal-length pair that is not a single base"
+        return
+    # An indel. DPYD *3 and *7 are deletions, so a single-base pair cannot
+    # express them, and the engine deliberately matches them by canonical
+    # token rather than by nucleotide because the VCF spelling depends on the
+    # caller's normalisation. The invariant that matters is therefore not
+    # "one base" but "this canonicalises to the token the engine's allele
+    # table pins" — which is what is asserted here, against the engine
+    # itself rather than against a literal repeated in this file.
+    from anukriti_pgx_core.calling.base import canonical_indel_token
+
+    token = canonical_indel_token(ref, alt)
+    assert token is not None, f"{rsid}: unequal lengths but not a recognisable indel"
+    assert token in _engine_alts(rsid), (
+        f"{rsid}: spelling {ref}>{alt} canonicalises to {token}, which the "
+        f"engine's allele table does not define at this locus "
+        f"({sorted(_engine_alts(rsid))})"
+    )
 
 
 def test_every_locus_has_a_grch38_position() -> None:

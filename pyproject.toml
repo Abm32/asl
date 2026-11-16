@@ -44,7 +44,7 @@ dependencies = [
     # docs/REGRESSION_REVIEW_0.10.0_to_0.11.0.md, which records that, and
     # note that 0.10.0's own review verdict was "NOT APPROVED — one blocking
     # finding. A human clinician must sign off" and it was published anyway.
-    "anukriti-pgx-core==0.11.0",
+    "anukriti-pgx-core==0.15.0",
 ]
 
 [project.optional-dependencies]

@@ -141,10 +141,14 @@ def test_every_report_carries_the_residual_risk_section() -> None:
 
 def test_untested_loci_are_named_as_untested() -> None:
     text = render(build(_assay({})))
-    assert "Absence is NOT established for" in text
-    assert "An untested locus is not a negative result." in text
+    # Collapsed, because the disclosure paragraph is wrapped to the report
+    # width: a sentence that straddles a line break is still present. The
+    # guarantee under test is that it is said, not how it is laid out.
+    flat = " ".join(text.split())
+    assert "Absence is NOT established for" in flat
+    assert "An untested locus is not a negative result." in flat
     # *6 is not on the CPIC four and must be named as untested.
-    assert "c.2194G>A (*6)" in text
+    assert "c.2194G>A (*6)" in flat
 
 
 def test_a_tested_locus_requires_a_zygosity() -> None:

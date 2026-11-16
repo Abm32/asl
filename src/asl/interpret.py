@@ -59,6 +59,33 @@ PLUS_STRAND: dict[str, tuple[str, str]] = {
     "rs1801266": ("G", "A"),   # *8         g.97691776G>A
     "rs1801268": ("C", "A"),   # *10        g.97079071C>A
     "rs78060119": ("C", "A"),  # *12        g.97573943C>A
+    # The two deletions. Every entry above is a substitution, which is why
+    # these were missing: a single-base (REF, ALT) pair has no natural
+    # spelling for an indel, and the engine's locus-coverage test had been
+    # failing for them since the table widened.
+    #
+    # The letters are NOT a strand convention choice, so the rule written at
+    # the top of this dict does not decide them. A VCF indel is an anchor
+    # base followed by the event, and the anchor depends on the caller's
+    # normalisation - which is exactly why anukriti-pgx-core matches *3 and
+    # *7 by `canonical_indel_token` rather than by nucleotide. Both
+    # spellings below canonicalise to the token the engine's own allele
+    # table pins, verified against it rather than composed here:
+    #
+    #     canonical_indel_token("GG", "G")           -> del:G
+    #     canonical_indel_token("ATGAATGA", "ATGA")  -> del:ATGA
+    #
+    # and the engine table records those tokens with their provenance -
+    # *3 from CPIC sequence_location g.97450067del, *7 from PharmVar PV02265
+    # plus Ensembl rs72549309. CPIC gives *7 as g.97740411ATGA[1], the
+    # repeat-count notation for ATGAATGA collapsing to ATGA, which is the
+    # same event.
+    #
+    # Because the engine canonicalises, a laboratory that spells either
+    # deletion differently (TG>T, GATGA>G) still matches. That is the point
+    # of the token, and it is why pinning one spelling here is safe.
+    "rs72549303": ("GG", "G"),          # *3  c.1898del     del:G
+    "rs72549309": ("ATGAATGA", "ATGA"),  # *7  c.299_302del  del:ATGA
     "rs55971861": ("T", "G"),  # c.1906A>C  g.97382461T>G
     # The remaining loci the engine calls. Added 2026-10-13: pgx-core 0.11.0
     # widened its allele table to 33 alleles across 32 sites, and until this
@@ -125,6 +152,10 @@ GRCH38_POS: dict[str, int] = {
     "rs137999090": 97373598,
     "rs141044036": 97082365,
     "rs72547601": 97079121,
+    # The two deletions. CPIC sequence_location by dbsnpid:
+    # rs72549303 g.97450067del, rs72549309 g.97740411ATGA[1].
+    "rs72549303": 97450067,
+    "rs72549309": 97740411,
 }
 
 # rsID -> CPIC allele name, for evidence lookup.
@@ -133,7 +164,34 @@ GRCH38_POS: dict[str, int] = {
 # point: rs75017182 is the causal variant CPIC publishes as an allele in its own
 # right, and rs56038477 is the benign synonymous tag SNP whose decreased-function
 # reading is CPIC's inference from the haplotype. See ``hapb3_disclosure``.
+# Pinned names with no row in the CPIC evidence snapshot this package ships.
+#
+# Every other name in CPIC_ALLELE is a key in DPYD_evidence.json and so carries
+# citations and a function assignment. c.299_302del (*7) is not: the engine can
+# call the locus and CPIC's live API gives rs72549309 as DPYD c.299_302del, but
+# the pinned snapshot predates it.
+#
+# The alternative was to leave *7 out of PLUS_STRAND entirely, which is what
+# had been happening - and that is worse. An unpinned locus is not orderable
+# in a panel preset, never appears in a coverage strip, and is dropped by the
+# engine without a word if a VCF supplies it. Pinning it makes it orderable
+# and lets `evidence` refuse for it by name, which is a visible gap rather
+# than a silent one.
+#
+# This set is the gap, written down. The test that every pinned name has
+# evidence allows exactly these and nothing else, so the gap cannot grow
+# without someone deciding that it should.
+EVIDENCE_GAP: frozenset[str] = frozenset({"c.299_302del (*7)"})
+
 CPIC_ALLELE: dict[str, str] = {
+    # Both deletions. *3 is a key in the pinned CPIC evidence table, so it
+    # carries citations and a function assignment like every other locus.
+    # *7 is NOT in that snapshot, so `evidence` will refuse for it by name
+    # rather than report an untraceable claim - which is the designed
+    # behaviour, and better than leaving the locus unorderable entirely.
+    # CPIC's live API gives rs72549309 as DPYD c.299_302del.
+    "rs72549303": "c.1898delC (*3)",
+    "rs72549309": "c.299_302del (*7)",
     "rs3918290": "c.1905+1G>A (*2A)",
     "rs55886062": "c.1679T>G (*13)",
     "rs67376798": "c.2846A>T",
