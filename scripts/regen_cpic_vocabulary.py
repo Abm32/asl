@@ -60,8 +60,17 @@ FILENAME = "CPIC_VOCABULARY.json"
 ENGINE_TERMS = ("Indeterminate",)
 
 
+#: CPIC began refusing Python's default urllib User-Agent with HTTP 403 on
+#: 2026-10-29 while still serving curl, so this request identifies itself.
+#: A repo name and its public URL, never a person or an address.
+_UA = "asl (+https://github.com/AnukritiAi-hq/asl)"
+
+
 def _get(path: str) -> list[dict]:
-    with urllib.request.urlopen(API + path, timeout=120) as response:
+    req = urllib.request.Request(
+        API + path, headers={"Accept": "application/json", "User-Agent": _UA}
+    )
+    with urllib.request.urlopen(req, timeout=120) as response:  # noqa: S310
         return json.load(response)
 
 
